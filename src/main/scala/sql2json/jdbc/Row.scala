@@ -54,7 +54,7 @@ object Row
         if (rs.wasNull) Json.nil else r.toString.toJson
       case Types.DECIMAL | Types.NUMERIC => 
         val r = rs.getBigDecimal(index)
-        if (rs.wasNull) Json.nil else r.toJson
+        if (rs.wasNull) Json.nil else BigDecimal(r).toJson
       case Types.DOUBLE | Types.FLOAT => 
         val r = rs.getDouble(index)
         if (rs.wasNull) Json.nil else r.toJson

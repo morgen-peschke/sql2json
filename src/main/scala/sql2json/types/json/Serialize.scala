@@ -33,9 +33,9 @@ object Serialize
   private val byteEncoder = java.util.Base64.getEncoder
   given Serialize[Array[Byte]] = ba => Json.Text(byteEncoder.encodeToString(ba))
 
-  given bdSerialize: Serialize[BigDecimal] = Json.Number(_)
-
-  given Serialize[java.math.BigDecimal] = bd => Json.Number(BigDecimal(bd))
+  private val bdSerialize: Serialize[BigDecimal] = Json.Number(_)
+  
+  given Serialize[BigDecimal] = bdSerialize
 
   given Serialize[BigInt] = bdSerialize.comap(BigDecimal(_))
 

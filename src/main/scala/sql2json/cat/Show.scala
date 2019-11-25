@@ -5,8 +5,6 @@ trait Show[A]
   def show(a: A): String
 
 object Show
-  def apply[A](given S: Show[A]) = S
-
   trait ShowOps[A]
     def (a: A) show(given S: Show[A]): String = S.show(a)
 

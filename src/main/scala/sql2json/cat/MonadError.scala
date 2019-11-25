@@ -20,8 +20,6 @@ object MonadError
   type Aux[C[_], E] = MonadError[C] with
     type E
 
-  def apply[C[_], E](given ME: MonadError.Aux[C,E]) = ME
-
   def derived[C[_], E](given M: Monad[C], AE: ApplicativeError.Aux[C,E]): MonadError.Aux[C, E] = 
     new MonadError[C](given M, AE) with
       type E = AE.E

@@ -9,8 +9,6 @@ trait BifunctorCanBeFunctor
     B.rightFunctor[L]
 
 object Functor extends BifunctorCanBeFunctor 
-  def apply[C[_]: Functor] = summon[Functor[C]]
-
   trait FunctorOps[C[_],A]
     def [B] (fa: C[A]) map (f: A => B)(given F: Functor[C]): C[B] = F.map(fa, f)
 

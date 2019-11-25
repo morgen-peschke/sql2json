@@ -9,8 +9,6 @@ trait SemigroupK[C[_]]
       def combine (a: C[A], b: C[A]): C[A] = combineK(a,b)
 
 object SemigroupK
-  def apply[C[_]](given S: SemigroupK[C]) = S
-
   trait SemigroupKOps[C[_],A]
     def (a: C[A]) combineK (b: C[A])(given SK: SemigroupK[C]): C[A] = SK.combineK(a,b)
 

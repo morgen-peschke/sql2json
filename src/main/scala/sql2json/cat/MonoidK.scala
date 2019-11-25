@@ -11,8 +11,6 @@ trait MonoidK[C[_]](given val semigroupK: SemigroupK[C])
   def withSemigroupK[B](body: (given SemigroupK[C]) => B): B = body(given semigroupK)
 
 object MonoidK
-  def apply[C[_]](given M: MonoidK[C]): MonoidK[C] = M
-
   given MonoidK[List]
     def emptyK[A]: List[A] = Nil
 

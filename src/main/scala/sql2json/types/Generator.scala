@@ -79,8 +79,8 @@ object Generator
     override def toString: String = "Generator.empty"
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Action[B] = initial.stop
     override def foreach(f: A => Action[Done]): Done = Done
-    override def fold(given Monoid[A]): A = Monoid[A].empty
-    override def foldK[C[_]: Applicative: MonoidK]: C[A] = MonoidK[C].emptyK[A]
+    override def fold(given M: Monoid[A]): A = M.empty
+    override def foldK[C[_]: Applicative](given MK: MonoidK[C]): C[A] = MK.emptyK[A]
 
   class One[A: Show](value: A) extends Generator[A]
     override def toString: String = s"Generator.one(${value.show})"

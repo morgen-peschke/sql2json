@@ -10,10 +10,8 @@ trait MonoidKCanProvideMonoid
   given[M[_], A] (given M: MonoidK[M]): Monoid[M[A]] = M.monoid[A]
 
 object Monoid extends MonoidKCanProvideMonoid
-  def apply[A](given M: Monoid[A]): Monoid[A] = M
-
   def instance[A: Semigroup](zero: A): Monoid[A] =
     new Monoid[A] with
       def empty: A = zero
 
-  def empty[A: Monoid]: A = Monoid[A].empty
+  def empty[A](given M: Monoid[A]): A = M.empty

@@ -5,8 +5,6 @@ trait Eq[A]
   def equiv(a: A, b: A): Boolean
   
 object Eq
-  def apply[A](given E: Eq[A]): Eq[A] = E
-
   trait EqOps[A]
     def (a: A) === (b: A)(given E: Eq[A]): Boolean = E.equiv(a, b)
 
