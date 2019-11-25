@@ -97,34 +97,10 @@ final class ValidatedTest
       "b".invalid combine "c".invalid
     )
 
-  @Test def testApplicative(): Unit = 
-    assertEquals(
-      1.pure[Validated],
-      1.valid
-    )
-
   @Test def testApplicativeError(): Unit = 
     assertEquals(
       NonEmptyList.one("a").raise[Validated,Int],
       "a".invalid[Int]
-    )
-
-  @Test def testFailFastMonad(): Unit = 
-    assertEquals(
-      "a".valid.failFast.flatMap(s => s"|$s|".invalid.failFast),
-      "|a|".invalid.failFast
-    )
-    assertEquals(
-      "a".valid.failFast.flatMap(s => s"|$s|".valid.failFast),
-      "|a|".valid.failFast
-    )
-    assertEquals(
-      "a".invalid.failFast.flatMap(s => s"|$s|".invalid.failFast),
-      "a".invalid.failFast
-    )
-    assertEquals(
-      "a".invalid.failFast.flatMap(s => s"|$s|".valid.failFast),
-      "a".invalid.failFast
     )
 
   // @Test def testFailFastMonadError(): Unit = 
