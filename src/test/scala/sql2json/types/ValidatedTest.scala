@@ -12,8 +12,7 @@ import cat.Monad.given
 import cat.MonadError.given
 import org.junit.Test
 import org.junit.Assert._
-import testing.laws.EqLaws
-import testing.laws.FunctorLaws
+import testing.laws.{ApplicativeLaws, EqLaws, FunctorLaws}
 import testing.Arbitrary
 
 import ValidatedTest.given
@@ -21,6 +20,8 @@ import ValidatedTest.given
 final class ValidatedEqLaws extends EqLaws[Validated[Boolean]]
 
 final class ValidatedFunctorLaws extends FunctorLaws[Validated, Int, String, Long]
+
+final class ValidatedApplicativeLaws extends ApplicativeLaws[Validated, Int, String, Long]
 
 final class ValidatedTest 
 
@@ -152,6 +153,8 @@ object ValidatedTest
       Arbitrary[String].map(_.invalid[A])
     )    
 
-  given EqLaws.Givens[Validated[Boolean]] = EqLaws.Givens[Validated[Boolean]]
+  given eqGivens: EqLaws.Givens[Validated[Boolean]] = EqLaws.Givens[Validated[Boolean]]
 
-  given FunctorLaws.Givens[Validated, Int, String, Long] = FunctorLaws.Givens.derive[Validated, Int, String, Long]
+  given functorGivens: FunctorLaws.Givens[Validated, Int, String, Long] = FunctorLaws.Givens[Validated, Int, String, Long]
+
+  given applicativeGivens: ApplicativeLaws.Givens[Validated, Int, String, Long] = ApplicativeLaws.Givens[Validated, Int, String, Long]

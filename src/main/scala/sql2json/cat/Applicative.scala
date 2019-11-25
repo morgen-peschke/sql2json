@@ -9,7 +9,7 @@ trait Applicative[C[_]](given val functor: Functor[C])
 
   def ap[A, B](cf: C[A => B], ca: C[A]): C[B]
 
-  def zip[A,B](ca: C[A], cb: C[B]): C[A ~ B] =
+  def product[A,B](ca: C[A], cb: C[B]): C[A ~ B] =
     ap(ca.map(a => (b: B) => (a,b)),cb)
 
   def productR[A,B](ca: C[A], cb: C[B]): C[B] = 
@@ -28,8 +28,10 @@ object Applicative
 
   trait ApplicativeOps[C[_], A]
     def[B](cf: C[A => B]) ap (ca: C[A])(given AP: Applicative[C]): C[B] = AP.ap(cf, ca)
-
-    def[B](ca: C[A]) |@| (cb: C[B])(given AP: Applicative[C]): C[A ~ B] = AP.zip(ca, cb)
+   
+    def[B](cf: C[A => B]) <*> (ca: C[A])(given AP: Applicative[C]): C[B] = AP.ap(cf, ca)
+    
+    def[B](ca: C[A]) |@| (cb: C[B])(given AP: Applicative[C]): C[A ~ B] = AP.product(ca, cb)
 
     def[B](ca: C[A]) *> (cb: C[B])(given AP: Applicative[C]): C[B] = AP.productR(ca, cb)
 
