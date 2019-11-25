@@ -3,6 +3,8 @@ package types
 package json 
 
 import scala.math.Numeric
+import cat.Cofunctor
+import cat.Cofunctor.given
 
 /**
  * Very minimal serialization of arbitrary types to [[Json]].
@@ -18,38 +20,29 @@ object Serialize
   trait SerializeOps[A]
     def (a: A) toJson (given S: Serialize[A]): Json = S.toJson(a)
 
-  given syntax[A]: SerializeOps[A]
+  given[A]: SerializeOps[A]
 
-  given Serialize[Boolean]
-    def toJson(a: Boolean): Json = Json.Bool(a)
- 
-  given Serialize[String]
-    def toJson(a: String): Json = Json.Text(a)
+  given Cofunctor[Serialize]
+    def comap [A,B] (fa: Serialize[A], f: B => A): Serialize[B] = b => fa.toJson(f(b))
 
-  given vectorSerializer[A](given Serialize[A]): Serialize[Vector[A]]
-    def toJson(va: Vector[A]): Json = Json.Array(va.map(_.toJson))
+  given Serialize[Boolean] = Json.Bool(_)
+  given Serialize[String] = Json.Text(_)
+
+  given[A](given Serialize[A]): Serialize[Vector[A]] = va => Json.Array(va.map(_.toJson))
 
   private val byteEncoder = java.util.Base64.getEncoder
-  given Serialize[Array[Byte]]
-    def toJson(ba: Array[Byte]): Json = Json.Text(byteEncoder.encodeToString(ba))
+  given Serialize[Array[Byte]] = ba => Json.Text(byteEncoder.encodeToString(ba))
 
-  given Serialize[BigDecimal]
-    def toJson(a: BigDecimal): Json = Json.Number(a)
+  given bdSerialize: Serialize[BigDecimal] = Json.Number(_)
 
-  given serializeJavaBigDecimal: Serialize[java.math.BigDecimal]
-    def toJson(a: java.math.BigDecimal): Json = Json.Number(BigDecimal(a))
+  given Serialize[java.math.BigDecimal] = bd => Json.Number(BigDecimal(bd))
 
-  given Serialize[BigInt]
-    def toJson(a: BigInt): Json = Json.Number(BigDecimal(a))
+  given Serialize[BigInt] = bdSerialize.comap(BigDecimal(_))
 
-  given Serialize[Int]
-    def toJson(a: Int): Json = Json.Number(BigDecimal(a))
+  given Serialize[Int] = bdSerialize.comap(BigDecimal(_))
 
-  given Serialize[Long]
-    def toJson(a: Long): Json = Json.Number(BigDecimal(a))
+  given Serialize[Long] = bdSerialize.comap(BigDecimal(_))
 
-  given Serialize[Float]
-    def toJson(a: Float): Json = Json.Number(BigDecimal(a.toDouble))
+  given Serialize[Float] = bdSerialize.comap(f => BigDecimal(f.toDouble))
 
-  given Serialize[Double]
-    def toJson(a: Double): Json = Json.Number(BigDecimal(a))
+  given Serialize[Double] = bdSerialize.comap(BigDecimal(_))

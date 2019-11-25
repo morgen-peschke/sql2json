@@ -2,11 +2,9 @@ package sql2json
 package types
 
 import scala.reflect.ClassTag
-import cat.Show
+import cat.{Show, Functor, Eq, Applicative, ApplicativeError, Semigroup, Monad, MonadError}
 import cat.Show.given
-import cat.Eq
 import cat.Eq.given
-import cat.Semigroup
 import cat.Semigroup.given
 import cat.SemigroupK.given
 
@@ -42,9 +40,8 @@ object Validated
         case _ => None
   }
 
-  given[A](given Show[A]): Show[Validated[A]]
-    def show(va: Validated[A]): String = 
-      va match
+  given[A](given Show[A]): Show[Validated[A]] =
+     _ match
         case Right(a) => s"Valid(${a.show})"
         case Left(e) => s"Invalid(${e.show})"
 
@@ -61,10 +58,21 @@ object Validated
         case (a @ Left(_), Right(_)) => a
         case (Left(a), Left(b)) => Left(a combineK b)
 
-  given cat.ApplicativeError[Validated]
-    type E = Errors
-    
+  given Functor[Validated]
+    def map[A,B] (fa: Validated[A], f: A => B): Validated[B] = fa.map(f)
+
+  given Applicative[Validated]
     def pure[A](a: A): Validated[A] = a.valid
+
+    def ap [A, B] (ff: Validated[A => B], fa: Validated[A]): Validated[B] =
+      (ff, fa) match
+        case (Right(f), Right(a)) => Right(f(a))
+        case (Right(_), Left(es)) => Left(es)
+        case (Left(es), Right(_)) => Left(es)
+        case (Left(ef), Left(eb)) => Left(ef combineK eb)
+
+  given ApplicativeError[Validated]
+    type E = Errors
     
     def raise[A](error: E): Validated[A] = error.invalid
 
@@ -73,15 +81,6 @@ object Validated
     def fold[A, B] (ca: Validated[A], fe: E => B, fa: A => B): B = ca.fold(fe, fa)
 
     override def toEither[A](ca: Validated[A]): Either[Errors, A] = ca
-
-    def ap [A, B] (ff: Validated[A => B], fa: Validated[A]): Validated[B] =
-      (ff, fa) match
-        case (Right(f), Right(a)) => Right(f(a))
-        case (Right(_), Left(es)) => Left(es)
-        case (Left(es), Right(_)) => Left(es)
-        case (Left(ef), Left(eb)) => Left(ef combineK eb)
-    
-    def map[A,B] (fa: Validated[A], f: A => B): Validated[B] = fa.map(f)
 
 /**
  * An attempt to stay zero-cost, and introduce a way to tell at the type level if the 
@@ -96,26 +95,31 @@ object FailFastValidated
 
   given[A]: FailFastOps[A]
 
-  given cat.MonadError[FailFastValidated]
-    type E = Errors
-    
+  given Functor[FailFastValidated]
+    def map[A,B] (fa: FailFastValidated[A], f: A => B): FailFastValidated[B] = fa.map(f)
+
+  given Applicative[FailFastValidated]
     def pure[A](a: A): FailFastValidated[A] = Right(a)
-    
-    def raise[A](error: E): FailFastValidated[A] = Left(error)
-
-    def recover[A](ca: FailFastValidated[A], f: E => A): FailFastValidated[A] = Right(ca.fold(f, identity))
-
-    def fold[A, B] (ca: FailFastValidated[A], fe: E => B, fa: A => B): B = ca.fold(fe, fa)
 
     def ap[A, B] (ff: FailFastValidated[A => B], fa: FailFastValidated[A]): FailFastValidated[B] =
       (ff, fa) match
         case (Right(f), Right(a)) => Right(f(a))
         case (Right(_), Left(es)) => Left(es)
         case (Left(es), _       ) => Left(es)
-    
-    def map[A,B] (fa: FailFastValidated[A], f: A => B): FailFastValidated[B] = fa.map(f)
 
+  given Monad[FailFastValidated]
     def flatMap[A,B] (ca: FailFastValidated[A], fc: A => FailFastValidated[B]): FailFastValidated[B] = 
       ca match 
         case Right(v) => fc(v)
         case Left(v) => Left(v)
+
+  given ApplicativeError[FailFastValidated]
+    type E = Errors
+          
+    def raise[A](error: E): FailFastValidated[A] = Left(error)
+
+    def recover[A](ca: FailFastValidated[A], f: E => A): FailFastValidated[A] = Right(ca.fold(f, identity))
+
+    def fold[A, B] (ca: FailFastValidated[A], fe: E => B, fa: A => B): B = ca.fold(fe, fa)
+
+  given MonadError[FailFastValidated] = MonadError.derived[FailFastValidated, Errors]

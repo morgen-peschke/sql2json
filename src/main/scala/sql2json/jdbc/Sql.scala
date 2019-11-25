@@ -2,7 +2,7 @@ package sql2json
 package jdbc
 
 import cat.Show
-import Show.syntax
+import Show.given
 import types.{Validated,Done,Generator}
 import Generator.Action
 import Done.done
@@ -16,8 +16,7 @@ import Row.{asRow, resultSetAsJson}
 import java.util.Properties
 import java.sql.{Connection, DriverManager, Statement, ResultSet, ResultSetMetaData}
 
-given Show[ResultSet]
-  def show (rs: ResultSet): String = rs.toString
+given Show[ResultSet] = _.toString
 
 /**
  * Very, very minimal wrapper around JDBC.
@@ -29,8 +28,7 @@ opaque type Sql = String
 object Sql
   def apply(q: String): Sql = q
 
-  given Show[Sql]
-    def show (s: Sql): String = s
+  given Show[Sql] = identity(_)
 
   def (sql: Sql) query (dbConfig: DBConfig, outputType: OutputType): Generator[Json] = 
     for 

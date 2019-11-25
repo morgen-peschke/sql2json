@@ -1,14 +1,14 @@
 package sql2json
 package cat
 
-trait MonoidK[C[_]] extends SemigroupK[C]
+trait MonoidK[C[_]](given val semigroupK: SemigroupK[C])
   def emptyK[A]: C[A] 
 
   def monoid[A]: Monoid[C[A]] = 
-    new Monoid[C[A]] with
+    new Monoid[C[A]](given semigroupK.semigroup) with
       def empty: C[A] = emptyK
 
-      def combine (a: C[A], b: C[A]): C[A] = combineK(a, b)
+  def withSemigroupK[B](body: (given SemigroupK[C]) => B): B = body(given semigroupK)
 
 object MonoidK
   def apply[C[_]](given M: MonoidK[C]): MonoidK[C] = M

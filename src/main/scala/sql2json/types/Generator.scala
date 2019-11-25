@@ -1,7 +1,8 @@
 package sql2json
 package types
 
-import cat.{Applicative, Functor, Monoid, MonoidK, Show}
+import cat.{Applicative, Functor, Semigroup, Monoid, MonoidK, Show}
+import cat.Applicative.given
 import cat.Functor.given
 import cat.Semigroup.given
 import cat.SemigroupK.given
@@ -23,16 +24,16 @@ trait Generator[A]
 
   def foreach(f: A => Action[Done]): Done = foldLeft(Done.upcast, (_, v) => f(v).map(_ => Done)).result
   
-  def fold(given Monoid[A]): A = 
+  def fold(given M: Monoid[A]): A = 
     foldLeft(
-      Monoid[A].empty, 
-      (accum, v) => Action.Continue(accum combine v)
+      M.empty, 
+      (accum, v) => Action.Continue(M.withSemigroup(accum combine v))
     ).result
 
-  def foldK[C[_]: Applicative: MonoidK]: C[A] = 
+  def foldK[C[_]: Applicative](given MK: MonoidK[C]): C[A] = 
     foldLeft[C[A]](
-      MonoidK[C].emptyK, 
-      (accum, v) => Action.Continue(accum combineK Applicative[C].pure(v))
+      MK.emptyK, 
+      (accum, v) => Action.Continue(MK.withSemigroupK(accum combineK v.pure))
     ).result
 
   def map[B](f: A => B): Generator[B] = new Generator.Map(f, this)
@@ -87,7 +88,7 @@ object Generator
     override def foreach(f: A => Action[Done]): Done = f(value).done
 
     override def fold(given Monoid[A]): A = value
-    override def foldK[C[_]: Applicative: MonoidK]: C[A] = Applicative[C].pure(value)
+    override def foldK[C[_]: Applicative: MonoidK]: C[A] = value.pure
 
   class Const[A: Show](value: A) extends Generator[A]
     override def toString: String = s"Generator.const(${value.show})"

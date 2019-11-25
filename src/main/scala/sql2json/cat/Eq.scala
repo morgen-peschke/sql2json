@@ -12,8 +12,9 @@ object Eq
 
     def (a: A) =!= (b: A)(given E: Eq[A]): Boolean = !E.equiv(a, b)
 
-  given syntax[A]: EqOps[A]
+  given[A]: EqOps[A]
 
-  given Eq[String] = _ == _
-  given Eq[Int] = _ == _
+  given Eq[String]  = _ == _
+  given Eq[Int]     = _ == _
+  given Eq[Long]    = _ == _
   given Eq[Boolean] = _ == _

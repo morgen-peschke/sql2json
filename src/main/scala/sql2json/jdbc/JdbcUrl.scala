@@ -16,8 +16,7 @@ object JdbcUrl
       case malformed if !malformed.startsWith("jdbc:") => "Expected JDBC url to start with 'jdbc:'".invalid
       case url => url.valid
   
-  given Show[JdbcUrl]
-      def show(a: JdbcUrl): String = a
+  given Show[JdbcUrl] = identity(_)
 
   def (url: JdbcUrl) connect (props: Properties): Connection =
     Class

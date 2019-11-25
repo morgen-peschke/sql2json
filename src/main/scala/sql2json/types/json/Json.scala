@@ -3,7 +3,7 @@ package types
 package json
 
 import cat.Show
-import Show.syntax
+import Show.given
 
 /**
  * Very simple JSON representation.
@@ -52,16 +52,15 @@ object Json
       .append('"')
       .toString
 
-  given Show[Json]
-    def show(j: Json): String = j match
-      case Json.Nil => "null"
-      case Json.Bool(true) => "true"
-      case Json.Bool(false) => "false"
-      case Json.Number(value) => value.toString
-      case Json.Text(value) => value.escaped
-      case Json.Array(elements) => elements.map(_.show).mkString("[", ",", "]")
-      case Json.Object(fields) => 
-        fields.map { 
-          case (k, v) => s"${k.escaped}: ${v.show}"
-        }
-        .mkString("{", ",", "}")
+  given Show[Json] = _ match
+    case Json.Nil => "null"
+    case Json.Bool(true) => "true"
+    case Json.Bool(false) => "false"
+    case Json.Number(value) => value.toString
+    case Json.Text(value) => value.escaped
+    case Json.Array(elements) => elements.map(_.show).mkString("[", ",", "]")
+    case Json.Object(fields) => 
+      fields.map { 
+        case (k, v) => s"${k.escaped}: ${v.show}"
+      }
+      .mkString("{", ",", "}")

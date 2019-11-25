@@ -20,8 +20,6 @@ trait Bifunctor[C[_,_]]
       def map [A,B] (fa: RightBiased[L][A], f: A => B): RightBiased[L][B] = rightMap(fa, f)
 
 object Bifunctor
-  def apply[C[_,_]](given Bifunctor[C]) = summon[Bifunctor[C]]
-
   trait BifunctorOps[C[_,_],L0,R0]
     def[L1,R1] (clr: C[L0,R0]) bimap (fl: L0 => L1, fr: R0 => R1)(given B: Bifunctor[C]): C[L1,R1] =
       B.bimap(clr, fl, fr)
@@ -32,7 +30,7 @@ object Bifunctor
     def[R1](clr: C[L0, R0]) rightMap (fr: R0 => R1)(given B: Bifunctor[C]): C[L0, R1] = 
       B.rightMap(clr, fr)
 
-  given syntax[C[_,_],L,R]: BifunctorOps[C,L,R]
+  given[C[_,_],L,R]: BifunctorOps[C,L,R]
 
   given Bifunctor[Either]
     def bimap[L0,R0,L1,R1](clr: Either[L0,R0], fl: L0 => L1, fr: R0 => R1): Either[L1,R1] = 

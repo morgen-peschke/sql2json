@@ -14,7 +14,7 @@ object SemigroupK
   trait SemigroupKOps[C[_],A]
     def (a: C[A]) combineK (b: C[A])(given SK: SemigroupK[C]): C[A] = SK.combineK(a,b)
 
-  given syntax[C[_],A]: SemigroupKOps[C,A]
+  given[C[_],A]: SemigroupKOps[C,A]
 
   given SemigroupK[List]
     def combineK[A] (a: List[A], b: List[A]): List[A] = a ::: b

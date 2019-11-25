@@ -1,7 +1,7 @@
 package sql2json
 package cat
 
-trait Monad[C[_]] extends Applicative[C]
+trait Monad[C[_]](given val applicative: Applicative[C])
   def flatMap[A,B](ca: C[A], fc: A => C[B]): C[B]
 
 object Monad
@@ -12,4 +12,4 @@ object Monad
 
     def[B] (ca: C[A]) >=> (fc: A => C[B])(given M: Monad[C]): C[B] = M.flatMap(ca, fc)
 
-  given syntax[C[_],A]: MonadOps[C,A]
+  given[C[_],A]: MonadOps[C,A]

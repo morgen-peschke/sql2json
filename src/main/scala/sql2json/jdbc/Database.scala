@@ -11,8 +11,5 @@ object Database
       case "" => "Database label cannot be empty".invalid
       case dbName => dbName.valid
 
-  given cat.Show[Database]
-      def show(db: Database): String = db
-    
-  given Ordering[Database]
-      def compare(a: Database, b: Database) = a.compare(b)
+  given cat.Show[Database] = identity(_)
+  given Ordering[Database] = _ compare _

@@ -2,25 +2,23 @@ package sql2json
 package cat
 
 import Applicative.~
+import Functor.given
 
-trait Applicative[C[_]] extends Functor[C]
-
+trait Applicative[C[_]](given val functor: Functor[C])
   def pure[A](a: A): C[A]
 
   def ap[A, B](cf: C[A => B], ca: C[A]): C[B]
 
   def zip[A,B](ca: C[A], cb: C[B]): C[A ~ B] =
-    ap(map(ca, a => (b: B) => (a,b)),cb)
+    ap(ca.map(a => (b: B) => (a,b)),cb)
 
   def productR[A,B](ca: C[A], cb: C[B]): C[B] = 
-    ap(map(ca, _ => identity(_: B)), cb)
+    ap(ca.map(_ => identity(_: B)), cb)
       
   def productL[A,B](ca: C[A], cb: C[B]): C[A] = 
-    ap(map(ca, a => (_: B) => a), cb)
+    ap(ca.map(a => (_: B) => a), cb)
 
 object Applicative
-  def apply[C[_]: Applicative] = summon[Applicative[C]]
-
   type ~[A,B] = (A,B)
   object ~
     def unapply[A,B](ab: (A,B)): (A,B) = ab
@@ -37,5 +35,5 @@ object Applicative
 
     def[B](ca: C[A]) <* (cb: C[B])(given AP: Applicative[C]): C[A] = AP.productL(ca, cb)
 
-  given lifts[A]: ApplicativeLifts[A]
-  given syntax[C[_],A]: ApplicativeOps[C, A]
+  given[A]: ApplicativeLifts[A]
+  given[C[_],A]: ApplicativeOps[C, A]

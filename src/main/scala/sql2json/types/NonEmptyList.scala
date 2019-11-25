@@ -1,9 +1,8 @@
 package sql2json
 package types
 
-import cat.Show
+import cat.{Show, Eq, SemigroupK, Functor}
 import cat.Show.given
-import cat.Eq
 import cat.Eq.given
 import scala.annotation.tailrec
 
@@ -30,10 +29,10 @@ object NonEmptyList
 
       nelA.head === nelB.head && loop(nelA.tail, nelB.tail)
 
-  given cat.SemigroupK[NonEmptyList]
+  given SemigroupK[NonEmptyList]
     def combineK[A](a: NonEmptyList[A], b: NonEmptyList[A]): NonEmptyList[A] = NonEmptyList(a.head, a.tail ::: b.toList)
 
-  given cat.Functor[NonEmptyList]
+  given Functor[NonEmptyList]
     def map[A,B] (fa: NonEmptyList[A], f: A => B): NonEmptyList[B] = NonEmptyList(f(fa.head), fa.tail.map(f))
 
   

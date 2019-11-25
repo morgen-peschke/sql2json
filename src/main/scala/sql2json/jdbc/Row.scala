@@ -3,7 +3,7 @@ package jdbc
 
 import java.sql.{ResultSet,ResultSetMetaData,Types}
 import types.json.Json
-import types.json.Serialize.syntax
+import types.json.Serialize.given
 import Row.asRow
 
 sealed abstract class OutputType 

@@ -15,8 +15,7 @@ object Credentials
         case "" => "Username cannot be empty".invalid
         case trimmed => trimmed.valid
 
-    given Show[Username]
-      def show(un: Username): String = un
+    given Show[Username] = identity(_)
 
     def (props: Properties) username (username: Username): Properties =
       props.put("user", username)
@@ -29,8 +28,7 @@ object Credentials
         case "" => "Password cannot be empty".invalid
         case trimmed => trimmed.valid
 
-    given Show[Password]
-      def show(p: Password): String = "********"
+    given Show[Password] = _ => "********"
 
     def (props: Properties) password (password: Password): Properties =
       props.put("password", password)
