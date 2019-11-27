@@ -1,6 +1,8 @@
 package sql2json
 package cat
 
+import Bifunctor.{LeftBiased, RightBiased}
+
 trait Bifunctor[C[_,_]]
   def bimap[L0,R0,L1,R1](clr: C[L0,R0], fl: L0 => L1, fr: R0 => R1): C[L1,R1]
 
@@ -8,18 +10,19 @@ trait Bifunctor[C[_,_]]
 
   def rightMap[L,R0,R1](clr: C[L, R0], fr: R0 => R1): C[L, R1] = bimap(clr, identity,fr)
 
-  type LeftBiased[R] = [L] =>> C[L,R]
-  type RightBiased[L] = [R] =>> C[L,R]
-  def leftFunctor[R]: Functor[LeftBiased[R]] = 
-    new Functor[LeftBiased[R]] with
-      def map[A,B] (fa: LeftBiased[R][A], f: A => B): LeftBiased[R][B] = leftMap(fa, f)
+  def leftFunctor[R]: Functor[LeftBiased[C][R]] = 
+    new Functor[LeftBiased[C][R]] with
+      def map[A,B] (fa: LeftBiased[C][R][A], f: A => B): LeftBiased[C][R][B] = leftMap(fa, f)
     
 
-  def rightFunctor[L]: Functor[RightBiased[L]] = 
-    new Functor[RightBiased[L]] with
-      def map [A,B] (fa: RightBiased[L][A], f: A => B): RightBiased[L][B] = rightMap(fa, f)
+  def rightFunctor[L]: Functor[RightBiased[C][L]] = 
+    new Functor[RightBiased[C][L]] with
+      def map [A,B] (fa: RightBiased[C][L][A], f: A => B): RightBiased[C][L][B] = rightMap(fa, f)
 
 object Bifunctor
+  type LeftBiased[C[_,_]] = [R] =>> [L] =>> C[L,R]
+  type RightBiased[C[_,_]] = [L] =>> [R] =>> C[L,R]
+
   trait BifunctorOps[C[_,_],L0,R0]
     def[L1,R1] (clr: C[L0,R0]) bimap (fl: L0 => L1, fr: R0 => R1)(given B: Bifunctor[C]): C[L1,R1] =
       B.bimap(clr, fl, fr)
