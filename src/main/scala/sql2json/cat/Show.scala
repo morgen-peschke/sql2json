@@ -14,5 +14,9 @@ object Show
   given Show[Int] = _.toString
   given Show[Long] = l => s"${l}L"
   given Show[Boolean] = _.toString
+  given [L: Show, R: Show]: Show[Either[L,R]] = 
+    _ match
+      case Left(l) => s"Left(${l.show})"
+      case Right(r) => s"Right(${r.show})"
 
   // TODO: Figure out how to tranlate the show"" interpolator

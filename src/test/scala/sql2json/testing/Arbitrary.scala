@@ -101,3 +101,9 @@ object Arbitrary
             (a: A) => GB.fromSeed(new scala.util.Random(offset + CA.toSeed(a)).nextLong)
 
   given [A,B](given CA: Cogen[A], GB: Gen[B], AB: Arbitrary[B]): Arbitrary[A => B] = makeArbFunction
+
+  given [L,R](given L: Arbitrary[L], R: Arbitrary[R]): Arbitrary[Either[L,R]] =
+    Arbitrary.oneOf[Either[L,R]](
+      L.map(Left(_)),
+      R.map(Right(_))
+    )
