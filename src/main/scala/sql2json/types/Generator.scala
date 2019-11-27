@@ -27,13 +27,13 @@ trait Generator[A]
   def fold(given M: Monoid[A]): A = 
     foldLeft(
       M.empty, 
-      (accum, v) => Action.Continue(M.withSemigroup(accum combine v))
+      (accum, v) => Action.Continue(accum combine v)
     ).result
 
   def foldK[C[_]: Applicative](given MK: MonoidK[C]): C[A] = 
     foldLeft[C[A]](
       MK.emptyK, 
-      (accum, v) => Action.Continue(MK.withSemigroupK(accum combineK v.pure))
+      (accum, v) => Action.Continue(accum combineK v.pure)
     ).result
 
   def map[B](f: A => B): Generator[B] = new Generator.Map(f, this)

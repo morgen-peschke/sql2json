@@ -4,13 +4,16 @@ package cat
 trait Semigroup[A]
   def combine (a: A, b: A): A
 
-trait SemigroupKCanProvideSemigroup
+trait SemigroupProviders
   given[C[_], A] (given S: SemigroupK[C]): Semigroup[C[A]] = S.semigroup[A]
 
-object Semigroup extends SemigroupKCanProvideSemigroup
+  given[A] (given M: Monoid[A]): Semigroup[A] = M.semigroup
+
+object Semigroup extends SemigroupProviders
   trait SemigroupOps[A]
     def (a: A) combine (b: A)(given S: Semigroup[A]): A = S.combine(a,b)
 
   given[A]: SemigroupOps[A]
 
-  given Semigroup[Int] = _ + _
+  given forInt: Semigroup[Int] = _ + _
+  given forLong: Semigroup[Long] = _ + _

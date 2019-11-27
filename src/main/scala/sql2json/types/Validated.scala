@@ -95,6 +95,17 @@ object FailFastValidated
 
   given[A]: FailFastOps[A]
 
+  given[A](given Show[A]): Show[FailFastValidated[A]] =
+    _ match
+       case Right(a) => s"FailFastValid(${a.show})"
+       case Left(e) => s"FailFastInvalid(${e.show})"
+
+  given[A: Eq]: Eq[FailFastValidated[A]] = 
+     (_, _) match
+       case (Right(a), Right(b)) => a === b
+       case (Left(ae), Left(be)) => ae === be
+       case _ => false
+
   given Functor[FailFastValidated]
     def map[A,B] (fa: FailFastValidated[A], f: A => B): FailFastValidated[B] = fa.map(f)
 

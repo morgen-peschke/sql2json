@@ -12,16 +12,21 @@ import cat.Monad.given
 import cat.MonadError.given
 import org.junit.Test
 import org.junit.Assert._
-import testing.laws.{ApplicativeLaws, EqLaws, FunctorLaws}
-import testing.Arbitrary
+import testing.laws.{ApplicativeLaws, EqLaws, FunctorLaws, MonadLaws}
+import testing.{Arbitrary, Gen, Cogen}
 
 import ValidatedTest.given
 
 final class ValidatedEqLaws extends EqLaws[Validated[Boolean]]
+final class FailFastValidatedEqLaws extends EqLaws[FailFastValidated[Boolean]]
 
 final class ValidatedFunctorLaws extends FunctorLaws[Validated, Int, String, Long]
+final class FailFastValidatedFunctorLaws extends FunctorLaws[FailFastValidated, Int, String, Long]
 
 final class ValidatedApplicativeLaws extends ApplicativeLaws[Validated, Int, String, Long]
+final class FailFastValidatedApplicativeLaws extends ApplicativeLaws[FailFastValidated, Int, String, Long]
+
+final class FailFastValidatedMonadLaws extends MonadLaws[FailFastValidated, Int, String]
 
 final class ValidatedTest 
 
@@ -94,7 +99,7 @@ final class ValidatedTest
     )
     assertEquals(
       NonEmptyList.of("b", "c").invalid[Int],
-      "b".invalid combine "c".invalid
+      "b".invalid[Int] combine "c".invalid[Int]
     )
 
   @Test def testApplicativeError(): Unit = 
@@ -129,8 +134,26 @@ object ValidatedTest
       Arbitrary[String].map(_.invalid[A])
     )    
 
+  given [A](given A: Arbitrary[Validated[A]]): Arbitrary[FailFastValidated[A]] =
+    A.map(_.failFast)
+
+  given [A](given GA: Gen[A], GS: Gen[String]): Gen[FailFastValidated[A]] = Gen.usingRandom { rng => 
+    if (rng.nextBoolean) rng.nextString(rng.nextInt(20)).invalid[A].failFast
+    else GA.fromSeed(rng.nextLong).valid.failFast
+  }
+
+  given [A](given CA: Cogen[A], CE: Cogen[NonEmptyList[String]]): Cogen[FailFastValidated[A]] = 
+    _.toEither match 
+      case Left(nel) => 2L + CE.toSeed(nel)
+      case Right(a)  => 1L + CA.toSeed(a)
+
   given eqGivens: EqLaws.Givens[Validated[Boolean]] = EqLaws.Givens[Validated[Boolean]]
+  given eqGivensFF: EqLaws.Givens[FailFastValidated[Boolean]] = EqLaws.Givens[FailFastValidated[Boolean]]
 
   given functorGivens: FunctorLaws.Givens[Validated, Int, String, Long] = FunctorLaws.Givens[Validated, Int, String, Long]
+  given functorGivensFF: FunctorLaws.Givens[FailFastValidated, Int, String, Long] = FunctorLaws.Givens[FailFastValidated, Int, String, Long]
 
   given applicativeGivens: ApplicativeLaws.Givens[Validated, Int, String, Long] = ApplicativeLaws.Givens[Validated, Int, String, Long]
+  given applicativeGivensFF: ApplicativeLaws.Givens[FailFastValidated, Int, String, Long] = ApplicativeLaws.Givens[FailFastValidated, Int, String, Long]
+
+  given monadGivensFF: MonadLaws.Givens[FailFastValidated, Int, String] = MonadLaws.Givens[FailFastValidated, Int, String]

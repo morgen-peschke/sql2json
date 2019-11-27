@@ -8,8 +8,6 @@ trait MonoidK[C[_]](given val semigroupK: SemigroupK[C])
     new Monoid[C[A]](given semigroupK.semigroup) with
       def empty: C[A] = emptyK
 
-  def withSemigroupK[B](body: (given SemigroupK[C]) => B): B = body(given semigroupK)
-
 object MonoidK
   given MonoidK[List]
     def emptyK[A]: List[A] = Nil
