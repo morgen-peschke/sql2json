@@ -17,4 +17,5 @@ object Cogen
   given Cogen[Int] = _.toLong
   given Cogen[Long] = identity(_)
   given Cogen[String] = _.foldLeft(0L)(_ + _.hashCode.toLong)
-  given [A: cat.Monoid](given A: Cogen[A]): Cogen[NonEmptyList[A]] = _.map(A.toSeed).fold
+  given Cogen[Boolean] = if _ then 0L else 1L
+  given [A](given A: Cogen[A]): Cogen[NonEmptyList[A]] = _.map(A.toSeed).fold

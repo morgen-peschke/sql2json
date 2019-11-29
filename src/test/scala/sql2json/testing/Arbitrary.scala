@@ -4,12 +4,15 @@ package testing
 import cat.{Applicative, Functor, Monad}
 import cat.Applicative.{~, given}
 import cat.Functor.given
+import types.NonEmptyList
 import cat.Monad.given
 import org.junit.Assert.assertThat
 import net.java.quickcheck.QuickCheck
 import net.java.quickcheck.{Generator, Characteristic}
 import net.java.quickcheck.generator.support.{IntegerGenerator, LongGenerator}
 import net.java.quickcheck.generator.PrimitiveGenerators
+
+import scala.util.Random
 
 /**
  * I don't know if QuickTheories implements it's [[Generator]] using mutable
@@ -49,6 +52,21 @@ object Arbitrary
           private val indexGen = new IntegerGenerator(0, aVector.length - 1)
           def next(): A = aVector(indexGen.next())
 
+  def between(low: Int, high: Int): Arbitrary[Int] =
+    val end = high max low
+    val start = high min low
+    val size = end - start
+    usingRandom(_.nextInt(size) + start)
+
+  val longs: Arbitrary[Long] = 
+    new Arbitrary[Long] with
+      def gen =
+        new Generator[Long] with
+          private val wrapped: Generator[java.lang.Long] = new LongGenerator()
+          def next(): Long = wrapped.next.toLong
+
+  def usingRandom[A](factory: Random => A): Arbitrary[A] = longs.map(new Random(_)).map(factory)
+
   given Functor[Arbitrary]
     def map [A,B] (fa: Arbitrary[A], f: A => B): Arbitrary[B] =
       new Arbitrary[B] with
@@ -85,20 +103,12 @@ object Arbitrary
         private val wrapped: Generator[java.lang.Integer] = new IntegerGenerator()
         def next(): Int = wrapped.next().toInt
 
-  given Arbitrary[Long]
-      def gen =
-        new Generator[Long] with
-          private val wrapped: Generator[java.lang.Long] = new LongGenerator()
-          def next(): Long = wrapped.next.toLong
+  given Arbitrary[Long] = longs
 
   def makeArbFunction[A,B](given CA: Cogen[A], GB: Gen[B], AB: Arbitrary[B]): Arbitrary[A => B] =
-    new Arbitrary[A => B] with 
-      def gen = 
-        new Generator[A => B] with
-          private val offsetGenerator: Generator[java.lang.Long] = new LongGenerator()
-          def next(): A => B = 
-            val offset = offsetGenerator.next()
-            (a: A) => GB.fromSeed(new scala.util.Random(offset + CA.toSeed(a)).nextLong)
+    longs.map { offset => 
+      (a: A) => GB.fromSeed(new scala.util.Random(offset + CA.toSeed(a)).nextLong)
+    }
 
   given [A,B](given CA: Cogen[A], GB: Gen[B], AB: Arbitrary[B]): Arbitrary[A => B] = makeArbFunction
 
@@ -107,3 +117,11 @@ object Arbitrary
       L.map(Left(_)),
       R.map(Right(_))
     )
+  
+  given[A] (given AA: Arbitrary[A]): Arbitrary[NonEmptyList[A]] =
+    between(0, 20).map { size => 
+      val gen = AA.gen
+      val head = gen.next()
+      val tail = List.fill(size - 1)(gen.next())
+      NonEmptyList(head, tail)
+    }

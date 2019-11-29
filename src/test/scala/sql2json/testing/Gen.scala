@@ -1,6 +1,7 @@
 package sql2json
 package testing
 
+import types.NonEmptyList
 import scala.util.Random
 
 /**
@@ -18,3 +19,11 @@ object Gen
   given Gen[Int] = _.toInt
   given Gen[Long] = identity(_)
   given Gen[String] = usingRandom(rng => rng.nextString(rng.nextInt(100)))
+  given Gen[Boolean] = usingRandom(_.nextBoolean)
+  
+  given[A](given GA: Gen[A]): Gen[NonEmptyList[A]] = usingRandom { rng => 
+    val size = rng.nextInt(20)
+    val head = GA.fromSeed(rng.nextLong)
+    val tail = List.fill(size - 1)(rng.nextLong).map(GA.fromSeed)
+    NonEmptyList(head, tail)
+  }

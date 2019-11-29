@@ -18,7 +18,13 @@ trait Applicative[C[_]](given val functor: Functor[C])
   def productL[A,B](ca: C[A], cb: C[B]): C[A] = 
     ap(ca.map(a => (_: B) => a), cb)
 
-object Applicative
+trait MonadAlsoProvidesApplicative
+  given[F[_]] (given M: Monad[F]): Applicative[F] = M.applicative
+
+trait ApplicativeErrorProvidesApplicative extends MonadAlsoProvidesApplicative
+  given[F[_]] (given AE: ApplicativeError[F, ?]): Applicative[F] = AE.applicative
+
+object Applicative extends ApplicativeErrorProvidesApplicative
   type ~[A,B] = (A,B)
   object ~
     def unapply[A,B](ab: (A,B)): (A,B) = ab

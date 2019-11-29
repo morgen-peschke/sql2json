@@ -12,7 +12,7 @@ import cat.Monad.given
 import cat.MonadError.given
 import org.junit.Test
 import org.junit.Assert._
-import testing.laws.{ApplicativeLaws, EqLaws, FunctorLaws, MonadLaws}
+import testing.laws.{ApplicativeLaws, EqLaws, FunctorLaws, MonadLaws, MonadErrorLaws}
 import testing.{Arbitrary, Gen, Cogen}
 
 import ValidatedTest.given
@@ -27,6 +27,7 @@ final class ValidatedApplicativeLaws extends ApplicativeLaws[Validated, Int, Str
 final class FailFastValidatedApplicativeLaws extends ApplicativeLaws[FailFastValidated, Int, String, Long]
 
 final class FailFastValidatedMonadLaws extends MonadLaws[FailFastValidated, Int, String]
+final class FailFastValidatedMonadErrorLaws extends MonadErrorLaws[FailFastValidated, Errors, Int, String]
 
 final class ValidatedTest 
 
@@ -108,25 +109,6 @@ final class ValidatedTest
       "a".invalid[Int]
     )
 
-  // @Test def testFailFastMonadError(): Unit = 
-  //   assertEquals(
-  //     "a".valid.failFast.ensure[Errors](NonEmptyList.one("oops"))(_ == "a"),
-  //     "a".valid.failFast
-  //   )
-  //   assertEquals(
-  //     "a".valid.failFast.ensure[Errors](NonEmptyList.one("oops"))(_ != "a"),
-  //     "oops".invalid.failFast
-  //   )
-  //   assertEquals(
-  //     "a".valid.failFast.ensureOr[Errors](NonEmptyList.one(_))(_ == "a"),
-  //     "a".valid.failFast
-  //   )
-  //   assertEquals(
-  //     "a".valid.failFast.ensureOr[Errors](NonEmptyList.one(_))(_ != "a"),
-  //     "a".invalid.failFast
-  //   )  
-
-
 object ValidatedTest
   given [A](given Arbitrary[A]): Arbitrary[Validated[A]] =
     Arbitrary.oneOf(
@@ -157,3 +139,4 @@ object ValidatedTest
   given applicativeGivensFF: ApplicativeLaws.Givens[FailFastValidated, Int, String, Long] = ApplicativeLaws.Givens[FailFastValidated, Int, String, Long]
 
   given monadGivensFF: MonadLaws.Givens[FailFastValidated, Int, String] = MonadLaws.Givens[FailFastValidated, Int, String]
+  given monadErrorGivensFF: MonadErrorLaws.Givens[FailFastValidated, Errors, Int, String] = MonadErrorLaws.Givens[FailFastValidated, Errors, Int, String]

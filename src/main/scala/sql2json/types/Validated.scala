@@ -71,14 +71,12 @@ object Validated
         case (Left(es), Right(_)) => Left(es)
         case (Left(ef), Left(eb)) => Left(ef combineK eb)
 
-  given ApplicativeError[Validated]
-    type E = Errors
-    
-    def raise[A](error: E): Validated[A] = error.invalid
+  given ApplicativeError[Validated, Errors]    
+    def raise[A](error: Errors): Validated[A] = error.invalid
 
-    def recover[A](ca: Validated[A], f: E => A): Validated[A] = ca.fold(f, identity).valid
+    def recover[A](ca: Validated[A], f: Errors => A): Validated[A] = ca.fold(f, identity).valid
 
-    def fold[A, B] (ca: Validated[A], fe: E => B, fa: A => B): B = ca.fold(fe, fa)
+    def fold[A, B] (ca: Validated[A], fe: Errors => B, fa: A => B): B = ca.fold(fe, fa)
 
     override def toEither[A](ca: Validated[A]): Either[Errors, A] = ca
 
@@ -124,13 +122,11 @@ object FailFastValidated
         case Right(v) => fc(v)
         case Left(v) => Left(v)
 
-  given ApplicativeError[FailFastValidated]
-    type E = Errors
-          
-    def raise[A](error: E): FailFastValidated[A] = Left(error)
+  given ApplicativeError[FailFastValidated, Errors]          
+    def raise[A](error: Errors): FailFastValidated[A] = Left(error)
 
-    def recover[A](ca: FailFastValidated[A], f: E => A): FailFastValidated[A] = Right(ca.fold(f, identity))
+    def recover[A](ca: FailFastValidated[A], f: Errors => A): FailFastValidated[A] = Right(ca.fold(f, identity))
 
-    def fold[A, B] (ca: FailFastValidated[A], fe: E => B, fa: A => B): B = ca.fold(fe, fa)
+    def fold[A, B] (ca: FailFastValidated[A], fe: Errors => B, fa: A => B): B = ca.fold(fe, fa)
 
-  given MonadError[FailFastValidated] = MonadError.derived[FailFastValidated, Errors]
+  given MonadError[FailFastValidated, Errors] = MonadError.derived[FailFastValidated, Errors]
