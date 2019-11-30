@@ -12,7 +12,7 @@ import cat.Monad.given
 import cat.MonadError.given
 import org.junit.Test
 import org.junit.Assert._
-import testing.laws.{ApplicativeLaws, EqLaws, FunctorLaws, MonadLaws, MonadErrorLaws}
+import testing.laws.{ApplicativeLaws, ApplicativeErrorLaws, EqLaws, FunctorLaws, MonadLaws, MonadErrorLaws}
 import testing.{Arbitrary, Gen, Cogen}
 
 import ValidatedTest.given
@@ -25,6 +25,9 @@ final class FailFastValidatedFunctorLaws extends FunctorLaws[FailFastValidated, 
 
 final class ValidatedApplicativeLaws extends ApplicativeLaws[Validated, Int, String, Long]
 final class FailFastValidatedApplicativeLaws extends ApplicativeLaws[FailFastValidated, Int, String, Long]
+
+final class ValidatedApplicativeErrorLaws extends ApplicativeErrorLaws[Validated, Errors, Int, String]
+final class FailFastValidatedApplicativeErrorLaws extends ApplicativeErrorLaws[FailFastValidated, Errors, Int, String]
 
 final class FailFastValidatedMonadLaws extends MonadLaws[FailFastValidated, Int, String]
 final class FailFastValidatedMonadErrorLaws extends MonadErrorLaws[FailFastValidated, Errors, Int, String]
@@ -137,6 +140,12 @@ object ValidatedTest
 
   given applicativeGivens: ApplicativeLaws.Givens[Validated, Int, String, Long] = ApplicativeLaws.Givens[Validated, Int, String, Long]
   given applicativeGivensFF: ApplicativeLaws.Givens[FailFastValidated, Int, String, Long] = ApplicativeLaws.Givens[FailFastValidated, Int, String, Long]
+  
+  given applicativeErrorGivens: ApplicativeErrorLaws.Givens[Validated, Errors, Int, String] = 
+    ApplicativeErrorLaws.Givens[Validated, Errors, Int, String]
+
+  given applicativeErrorGivensFF: ApplicativeErrorLaws.Givens[FailFastValidated, Errors, Int, String] = 
+    ApplicativeErrorLaws.Givens[FailFastValidated, Errors, Int, String]
 
   given monadGivensFF: MonadLaws.Givens[FailFastValidated, Int, String] = MonadLaws.Givens[FailFastValidated, Int, String]
   given monadErrorGivensFF: MonadErrorLaws.Givens[FailFastValidated, Errors, Int, String] = MonadErrorLaws.Givens[FailFastValidated, Errors, Int, String]

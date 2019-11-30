@@ -13,7 +13,6 @@ trait MonadError[C[_], E](given val monad: Monad[C], val applicativeError: Appli
     fa.flatMap(a => if (predicate(a)) a.pure else error(a).raise)
 
 object MonadError
-
   class DerivedMonadError[C[_], E](given Monad[C], ApplicativeError[C,E]) extends MonadError[C,E]
 
   def derived[C[_], E](given Monad[C], ApplicativeError[C,E]): MonadError[C, E] = new DerivedMonadError[C,E]

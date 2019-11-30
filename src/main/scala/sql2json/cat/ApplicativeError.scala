@@ -20,6 +20,14 @@ trait MonadErrorProvidesApplicativeError
   given [F[_], E] (given ME: MonadError[F, E]): ApplicativeError[F, E] = ME.applicativeError
 
 object ApplicativeError extends MonadErrorProvidesApplicativeError
+  def fromEither[F[_]]: FromEitherPartiallyApplied[F] = new FromEitherPartiallyApplied[F]
+
+  class FromEitherPartiallyApplied[F[_]](val ignored: Boolean = true) extends AnyVal
+    def apply[A, E](either: Either[E, A])(given AE: ApplicativeError[F, E]): F[A] = 
+      either match
+        case Left(e) => e.raise[F, A]
+        case Right(a) => a.pure[F]
+
   trait ApplicativeErrorLifts[E]
     def[C[_], A] (error: E) raise (given AE: ApplicativeError[C,E]): C[A] = AE.raise[A](error)
 
