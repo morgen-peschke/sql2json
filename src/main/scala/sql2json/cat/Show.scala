@@ -19,4 +19,5 @@ object Show
       case Left(l) => s"Left(${l.show})"
       case Right(r) => s"Right(${r.show})"
 
+  given [A: Show]: Show[List[A]] = _.map(_.show).mkString("[", ",", "]")
   // TODO: Figure out how to tranlate the show"" interpolator

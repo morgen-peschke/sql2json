@@ -11,7 +11,7 @@ import cat.Monad.given
 import cat.MonadError.given
 import org.junit.Test
 import org.junit.Assert._
-import testing.laws.{ApplicativeLaws, ApplicativeErrorLaws, EqLaws, FunctorLaws, MonadLaws, MonadErrorLaws}
+import testing.laws.{ApplicativeLaws, ApplicativeErrorLaws, EqLaws, FunctorLaws, MonadLaws, MonadErrorLaws, SemigroupLaws}
 import testing.{Arbitrary, Gen, Cogen}
 import testing.Arbitrary.forAll
 import testing.Result.given
@@ -32,6 +32,8 @@ final class FailFastValidatedApplicativeErrorLaws extends ApplicativeErrorLaws[F
 
 final class FailFastValidatedMonadLaws extends MonadLaws[FailFastValidated, Int, String]
 final class FailFastValidatedMonadErrorLaws extends MonadErrorLaws[FailFastValidated, Errors, Int, String]
+
+final class ValidatedSemigroupLaws extends SemigroupLaws[Validated[Int]]
 
 final class ValidatedTest 
   @Test def validConsistentWithPure(): Unit = 
@@ -123,3 +125,5 @@ object ValidatedTest
 
   given monadGivensFF: MonadLaws.Givens[FailFastValidated, Int, String] = MonadLaws.Givens[FailFastValidated, Int, String]
   given monadErrorGivensFF: MonadErrorLaws.Givens[FailFastValidated, Errors, Int, String] = MonadErrorLaws.Givens[FailFastValidated, Errors, Int, String]
+
+  given semigroupGivens: SemigroupLaws.Givens[Validated[Int]] = SemigroupLaws.Givens[Validated[Int]]

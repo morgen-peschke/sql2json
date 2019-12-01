@@ -125,3 +125,6 @@ object Arbitrary
       val tail = List.fill(size - 1)(gen.next())
       NonEmptyList(head, tail)
     }
+
+  given[A] (given Arbitrary[A]): Arbitrary[List[A]] = 
+    summon[Arbitrary[NonEmptyList[A]]].map(_.tail)
