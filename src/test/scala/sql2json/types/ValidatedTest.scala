@@ -4,16 +4,17 @@ package types
 import Validated.given
 import FailFastValidated.given
 import cat.{Eq,Show,Functor}
-import cat.Applicative.given
+import cat.Applicative.{~, given}
 import cat.ApplicativeError.given
 import cat.Functor.given
-import cat.Semigroup.given
 import cat.Monad.given
 import cat.MonadError.given
 import org.junit.Test
 import org.junit.Assert._
 import testing.laws.{ApplicativeLaws, ApplicativeErrorLaws, EqLaws, FunctorLaws, MonadLaws, MonadErrorLaws}
 import testing.{Arbitrary, Gen, Cogen}
+import testing.Arbitrary.forAll
+import testing.Result.given
 
 import ValidatedTest.given
 
@@ -33,18 +34,15 @@ final class FailFastValidatedMonadLaws extends MonadLaws[FailFastValidated, Int,
 final class FailFastValidatedMonadErrorLaws extends MonadErrorLaws[FailFastValidated, Errors, Int, String]
 
 final class ValidatedTest 
-
-  @Test def testToEitherRight(): Unit = 
-    assertEquals(
-      true.valid.toEither,
-      Right(true)
-    )
-
-  @Test def testToEitherLeft(): Unit = 
-    assertEquals(
-      "hi there".invalid.toEither,
-      Left(NonEmptyList.one("hi there"))
-    )
+  @Test def validConsistentWithPure(): Unit = 
+    forAll[Int]("valid consistency with pure") { value =>
+      value.valid <-> value.pure[Validated]
+    }
+  
+  @Test def invalidConsistentWithRaise(): Unit =
+    forAll[String]("invalid consistency with raise") { error =>
+      error.invalid[Int] <-> NonEmptyList.one(error).raise[Validated, Int]
+    }
 
   @Test def testAsValidatedFromNone(): Unit =
     assertEquals(
@@ -87,30 +85,6 @@ final class ValidatedTest
           "java.lang.IllegalStateException: Oops!"
         )
     }
-
-  @Test def testSemigroup(): Unit = 
-    assertEquals(
-      1.valid combine 2.valid,
-      3.valid
-    )
-    assertEquals(
-      "b".invalid[Int],
-      1.valid combine "b".invalid
-    )
-    assertEquals(
-      "a".invalid[Int],
-      "a".invalid[Int] combine 2.valid
-    )
-    assertEquals(
-      NonEmptyList.of("b", "c").invalid[Int],
-      "b".invalid[Int] combine "c".invalid[Int]
-    )
-
-  @Test def testApplicativeError(): Unit = 
-    assertEquals(
-      NonEmptyList.one("a").raise[Validated,Int],
-      "a".invalid[Int]
-    )
 
 object ValidatedTest
   given [A](given Arbitrary[A]): Arbitrary[Validated[A]] =
