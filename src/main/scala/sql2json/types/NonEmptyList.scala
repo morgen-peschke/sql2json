@@ -1,7 +1,7 @@
 package sql2json
 package types
 
-import cat.{Show, Eq, SemigroupK, Functor, Monoid}
+import cat.{Applicative, Show, Eq, SemigroupK, Functor, Monoid, Monad}
 import cat.Show.given
 import cat.Eq.given
 import cat.Monoid.given
@@ -15,6 +15,15 @@ case class NonEmptyList[A](head: A, tail: List[A])
   def toList: List[A] = head :: tail
 
   def fold(given M: Monoid[A]): A = tail.foldLeft(M.empty)(_ combine _)
+
+  def map[B] (f: A => B): NonEmptyList[B] = NonEmptyList(f(head), tail.map(f))
+
+  def flatMap[B](fc: A => NonEmptyList[B]): NonEmptyList[B] =
+    val processedHead = fc(head)
+    NonEmptyList(
+      processedHead.head,
+      processedHead.tail ::: tail.flatMap(a => fc(a).toList)
+    )
 
 object NonEmptyList
   def one[A](head: A): NonEmptyList[A] = NonEmptyList(head, Nil)
@@ -37,6 +46,13 @@ object NonEmptyList
     def combineK[A](a: NonEmptyList[A], b: NonEmptyList[A]): NonEmptyList[A] = NonEmptyList(a.head, a.tail ::: b.toList)
 
   given Functor[NonEmptyList]
-    def map[A,B] (fa: NonEmptyList[A], f: A => B): NonEmptyList[B] = NonEmptyList(f(fa.head), fa.tail.map(f))
+    def map[A,B] (fa: NonEmptyList[A], f: A => B): NonEmptyList[B] = fa.map(f)
 
+  given Applicative[NonEmptyList]
+    def pure[A](a: A): NonEmptyList[A] = one(a)
+
+    def ap[A, B](cf: NonEmptyList[A => B], ca: NonEmptyList[A]): NonEmptyList[B] = cf.flatMap(ca.map(_))
+
+  given Monad[NonEmptyList]
+    def flatMap[A,B](ca: NonEmptyList[A], fc: A => NonEmptyList[B]): NonEmptyList[B] = ca.flatMap(fc)
   
