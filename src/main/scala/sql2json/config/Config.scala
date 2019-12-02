@@ -3,8 +3,7 @@ package config
 
 import types.Validated
 import types.Validated.given
-import types.Credentials.{Username, Password}
-import jdbc.{JdbcUrl, Database}
+import jdbc.{JdbcUrl, Database, Username, Password}
 import cat.Show
 import Show.given
 

@@ -7,8 +7,8 @@ import types.{Validated,Done,Generator}
 import Generator.Action
 import Done.done
 import types.json.Json
-import types.Credentials.Username.username
-import types.Credentials.Password.password
+import Username.username
+import Password.password
 import config.DBConfig
 import JdbcUrl.connect
 import Row.{asRow, resultSetAsJson}

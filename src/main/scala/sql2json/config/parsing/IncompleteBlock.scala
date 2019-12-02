@@ -16,8 +16,7 @@ import types.Validated
 import types.Validated.given
 import types.FailFastValidated.given
 
-import sql2json.types.Credentials.{Username, Password}
-import sql2json.jdbc.{JdbcUrl, Database}
+import jdbc.{JdbcUrl, Database, Username, Password}
 
 import IncompleteBlock.{
   missingKeyErrorMessage,

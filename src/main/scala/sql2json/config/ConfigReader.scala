@@ -13,8 +13,7 @@ import types.FailFastValidated.given
 import java.nio.file.{Path, FileSystem, Files}
 import java.io.BufferedReader
 
-import sql2json.types.Credentials.{Username, Password}
-import sql2json.jdbc.{JdbcUrl, Database}
+import sql2json.jdbc.{JdbcUrl, Database, Username, Password}
 
 import parsing.{ParseState, ParseContext}
 import scala.annotation.tailrec
