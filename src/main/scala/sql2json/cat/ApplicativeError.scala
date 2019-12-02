@@ -2,7 +2,6 @@ package sql2json
 package cat
 
 import Applicative.given
-import Bifunctor.given
 
 trait ApplicativeError[C[_], E](given val applicative: Applicative[C])
   def raise[A](error: E): C[A]
