@@ -4,7 +4,7 @@ package testing
 import cat.{Applicative, Functor, Monad}
 import cat.Applicative.{~, given}
 import cat.Functor.given
-import types.NonEmptyList
+import types.{NonEmptyList, Done}
 import cat.Monad.given
 import org.junit.Assert.assertThat
 import net.java.quickcheck.QuickCheck
@@ -128,3 +128,5 @@ object Arbitrary
 
   given[A] (given Arbitrary[A]): Arbitrary[List[A]] = 
     summon[Arbitrary[NonEmptyList[A]]].map(_.tail)
+
+  given Arbitrary[Done] = Done.upcast.pure[Arbitrary]
