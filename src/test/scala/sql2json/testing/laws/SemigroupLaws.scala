@@ -31,3 +31,10 @@ object SemigroupLaws
       Eq[A],
       Show[A]
       ) => Unit): Unit = body.apply
+
+  given[A](given
+    Semigroup[A],
+    Arbitrary[A],
+    Eq[A],
+    Show[A]
+  ): Givens[A]

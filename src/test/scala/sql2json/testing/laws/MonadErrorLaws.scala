@@ -39,17 +39,17 @@ abstract class MonadErrorLaws[F[_], E, A, B](given ME: MonadErrorLaws.Givens[F, 
 object MonadErrorLaws
   class Givens[F[_], E, A, B](
     given
-      ME: MonadError[F,E],
-      EFA: Eq[F[A]],
-      SFA: Show[F[A]],
-      EFB: Eq[F[B]],
-      SFB: Show[F[B]],
-      AE: Arbitrary[E],
-      AFA: Arbitrary[F[A]],
-      AA2E: Arbitrary[A => E],
-      AE2E: Arbitrary[E => E],
-      APA: Arbitrary[A => Boolean], 
-      AA2FB: Arbitrary[A => F[B]]
+      MonadError[F,E],
+      Eq[F[A]],
+      Show[F[A]],
+      Eq[F[B]],
+      Show[F[B]],
+      Arbitrary[E],
+      Arbitrary[F[A]],
+      Arbitrary[A => E],
+      Arbitrary[E => E],
+      Arbitrary[A => Boolean], 
+      Arbitrary[A => F[B]]
   ) with
     def run(body: (
       given
@@ -66,17 +66,19 @@ object MonadErrorLaws
         Arbitrary[A => F[B]]
       ) => Unit
     ): Unit = 
-      body.apply(
-        given 
-          ME,
-          EFA,
-          SFA,
-          EFB,
-          SFB,
-          AE,
-          AFA,
-          AA2E,
-          AE2E,
-          APA,
-          AA2FB
-        )
+      body.apply
+
+  given[F[_], E, A, B](
+    given
+      MonadError[F,E],
+      Eq[F[A]],
+      Show[F[A]],
+      Eq[F[B]],
+      Show[F[B]],
+      Arbitrary[E],
+      Arbitrary[F[A]],
+      Arbitrary[A => E],
+      Arbitrary[E => E],
+      Arbitrary[A => Boolean], 
+      Arbitrary[A => F[B]]
+  ): Givens[F,E,A,B]

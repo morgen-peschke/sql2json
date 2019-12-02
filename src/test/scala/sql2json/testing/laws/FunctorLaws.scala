@@ -39,3 +39,14 @@ object FunctorLaws
   ) with
     def run(body: (given Functor[F], Show[F[A]], Show[F[C]], Eq[F[A]], Eq[F[C]], Arbitrary[F[A]], Arbitrary[A => B], Arbitrary[B => C]) => Unit): Unit = 
       body.apply
+
+  given[F[_], A, B, C](given
+    Functor[F],
+    Show[F[A]],
+    Show[F[C]],
+    Eq[F[A]],
+    Eq[F[C]],
+    Arbitrary[F[A]],
+    Arbitrary[A => B],
+    Arbitrary[B => C]
+  ): Givens[F,A,B,C]

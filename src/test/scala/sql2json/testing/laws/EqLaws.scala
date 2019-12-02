@@ -32,3 +32,5 @@ abstract class EqLaws[A](given givensForEqLaws: EqLaws.Givens[A])
 object EqLaws
   class Givens[A](given Eq[A], Show[A], Arbitrary[A])
     def run(body: (given Eq[A], Show[A], Arbitrary[A]) => Unit): Unit = body.apply
+
+  given [A: Eq: Show: Arbitrary]: Givens[A]

@@ -67,3 +67,17 @@ object BifunctorLaws
       Arbitrary[RB => RC]
     ) => Unit): Unit = 
         body.apply
+
+  given[F[_,_], LA, LB, LC, RA, RB, RC](
+    given
+    Bifunctor[F],
+    Show[F[LA,RA]],
+    Show[F[LC,RC]],
+    Eq[F[LA,RA]],
+    Eq[F[LC, RC]],
+    Arbitrary[F[LA,RA]],
+    Arbitrary[LA => LB],
+    Arbitrary[LB => LC],
+    Arbitrary[RA => RB],
+    Arbitrary[RB => RC]
+  ): Givens[F, LA, LB, LC, RA, RB, RC]

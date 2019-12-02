@@ -37,3 +37,11 @@ object MonoidLaws
       Eq[A],
       Show[A]
       ) => Unit): Unit = body.apply
+
+  given[A](
+    given
+      Monoid[A],
+      Arbitrary[A],
+      Eq[A],
+      Show[A]
+    ): Givens[A]

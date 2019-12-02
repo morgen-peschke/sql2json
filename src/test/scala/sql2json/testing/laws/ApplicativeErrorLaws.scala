@@ -96,3 +96,22 @@ object ApplicativeErrorLaws
       Arbitrary[E => B],
       Arbitrary[Either[E, A]]
     ) => Unit): Unit = body.apply
+
+  given [F[_], E, A, B](
+    given
+      ApplicativeError[F,E],
+      Eq[Either[E,A]],
+      Show[Either[E,A]],
+      Eq[F[A]],
+      Show[F[A]],
+      Eq[B],
+      Show[B],
+      Arbitrary[F[A]],
+      Arbitrary[A],
+      Arbitrary[E],
+      Arbitrary[A => B],
+      Arbitrary[E => A],
+      Arbitrary[E => E],
+      Arbitrary[E => B],
+      Arbitrary[Either[E, A]]
+  ): Givens[F, E, A, B]

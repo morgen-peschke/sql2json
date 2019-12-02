@@ -69,19 +69,19 @@ abstract class ApplicativeLaws[F[_], A, B, C](given AG: ApplicativeLaws.Givens[F
 
 object ApplicativeLaws
   class Givens[F[_], A, B, C](given 
-    AF: Applicative[F],
-    SFA: Show[F[A]],
-    SFB: Show[F[B]],
-    SFC: Show[F[C]],
-    EFA: Eq[F[A]],
-    EFB: Eq[F[B]],
-    EFC: Eq[F[C]],
-    AA: Arbitrary[A],
-    AFA: Arbitrary[F[A]],
-    AFB: Arbitrary[F[B]],
-    AA2B: Arbitrary[A => B],
-    AFA2B: Arbitrary[F[A => B]],
-    AFB2C: Arbitrary[F[B => C]]
+    Applicative[F],
+    Show[F[A]],
+    Show[F[B]],
+    Show[F[C]],
+    Eq[F[A]],
+    Eq[F[B]],
+    Eq[F[C]],
+    Arbitrary[A],
+    Arbitrary[F[A]],
+    Arbitrary[F[B]],
+    Arbitrary[A => B],
+    Arbitrary[F[A => B]],
+    Arbitrary[F[B => C]]
   ) with
     def run(body: (given 
                     Applicative[F],
@@ -99,19 +99,20 @@ object ApplicativeLaws
                     Arbitrary[F[A => B]],
                     Arbitrary[F[B => C]]
                   ) => Unit): Unit = 
-        body.apply(given 
-          AF, 
-          AF.functor, 
-          SFA,
-          SFB,
-          SFC,
-          EFA,
-          EFB,
-          EFC,
-          AA,
-          AFA,
-          AFB,
-          AA2B,
-          AFA2B,
-          AFB2C
-        )
+        body.apply
+
+  given[F[_], A, B, C](given 
+      Applicative[F],
+      Show[F[A]],
+      Show[F[B]],
+      Show[F[C]],
+      Eq[F[A]],
+      Eq[F[B]],
+      Eq[F[C]],
+      Arbitrary[A],
+      Arbitrary[F[A]],
+      Arbitrary[F[B]],
+      Arbitrary[A => B],
+      Arbitrary[F[A => B]],
+      Arbitrary[F[B => C]]
+  ): Givens[F,A,B,C]

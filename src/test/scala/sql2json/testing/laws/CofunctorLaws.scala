@@ -40,3 +40,16 @@ object CofunctorLaws
   ) with
     def run(body: (given Cofunctor[F], Show[F[A]], Show[F[C]], Eq[F[A]], Eq[F[C]], Eq[C], Arbitrary[F[A]], Arbitrary[B => A], Arbitrary[C => B]) => Unit): Unit = 
       body.apply
+
+  given[F[_], A, B, C](
+    given
+      Cofunctor[F],
+      Show[F[A]],
+      Show[F[C]],
+      Eq[F[A]],
+      Eq[F[C]],
+      Eq[C],
+      Arbitrary[F[A]],
+      Arbitrary[B => A],
+      Arbitrary[C => B]
+  ): Givens[F, A, B, C]

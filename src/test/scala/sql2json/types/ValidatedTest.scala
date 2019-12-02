@@ -107,23 +107,3 @@ object ValidatedTest
     _.toEither match 
       case Left(nel) => 2L + CE.toSeed(nel)
       case Right(a)  => 1L + CA.toSeed(a)
-
-  given eqGivens: EqLaws.Givens[Validated[Boolean]] = EqLaws.Givens[Validated[Boolean]]
-  given eqGivensFF: EqLaws.Givens[FailFastValidated[Boolean]] = EqLaws.Givens[FailFastValidated[Boolean]]
-
-  given functorGivens: FunctorLaws.Givens[Validated, Int, String, Long] = FunctorLaws.Givens[Validated, Int, String, Long]
-  given functorGivensFF: FunctorLaws.Givens[FailFastValidated, Int, String, Long] = FunctorLaws.Givens[FailFastValidated, Int, String, Long]
-
-  given applicativeGivens: ApplicativeLaws.Givens[Validated, Int, String, Long] = ApplicativeLaws.Givens[Validated, Int, String, Long]
-  given applicativeGivensFF: ApplicativeLaws.Givens[FailFastValidated, Int, String, Long] = ApplicativeLaws.Givens[FailFastValidated, Int, String, Long]
-  
-  given applicativeErrorGivens: ApplicativeErrorLaws.Givens[Validated, Errors, Int, String] = 
-    ApplicativeErrorLaws.Givens[Validated, Errors, Int, String]
-
-  given applicativeErrorGivensFF: ApplicativeErrorLaws.Givens[FailFastValidated, Errors, Int, String] = 
-    ApplicativeErrorLaws.Givens[FailFastValidated, Errors, Int, String]
-
-  given monadGivensFF: MonadLaws.Givens[FailFastValidated, Int, String] = MonadLaws.Givens[FailFastValidated, Int, String]
-  given monadErrorGivensFF: MonadErrorLaws.Givens[FailFastValidated, Errors, Int, String] = MonadErrorLaws.Givens[FailFastValidated, Errors, Int, String]
-
-  given semigroupGivens: SemigroupLaws.Givens[Validated[Int]] = SemigroupLaws.Givens[Validated[Int]]

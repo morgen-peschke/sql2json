@@ -36,15 +36,15 @@ abstract class MonadLaws[F[_], A, B](given MG: MonadLaws.Givens[F, A, B])
 object MonadLaws
   class Givens[F[_], A, B](
     given
-      MF: Monad[F],
-      EFA: Eq[F[A]],
-      SFA: Show[F[A]],
-      EFB: Eq[F[B]],
-      SFB: Show[F[B]],
-      AA: Arbitrary[A],
-      AFA: Arbitrary[F[A]],
-      AA2B: Arbitrary[A => B],
-      AA2FB: Arbitrary[A => F[B]]
+      Monad[F],
+      Eq[F[A]],
+      Show[F[A]],
+      Eq[F[B]],
+      Show[F[B]],
+      Arbitrary[A],
+      Arbitrary[F[A]],
+      Arbitrary[A => B],
+      Arbitrary[A => F[B]]
   ) with
     def run(body: (
       given 
@@ -60,17 +60,17 @@ object MonadLaws
         Arbitrary[A => B],
         Arbitrary[A => F[B]]
     ) => Unit): Unit = 
-      body.apply(
-        given 
-          MF,
-          MF.applicative,
-          MF.applicative.functor,
-          EFA,
-          SFA,
-          EFB,
-          SFB,
-          AA,
-          AFA,
-          AA2B,
-          AA2FB
-      )
+      body.apply
+
+  given[F[_], A, B](
+    given
+      Monad[F],
+      Eq[F[A]],
+      Show[F[A]],
+      Eq[F[B]],
+      Show[F[B]],
+      Arbitrary[A],
+      Arbitrary[F[A]],
+      Arbitrary[A => B],
+      Arbitrary[A => F[B]]
+  ): Givens[F, A, B]
