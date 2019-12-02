@@ -11,7 +11,10 @@ trait BifunctorCanBeFunctor
   given [C[_,_],R](given B: Bifunctor[C]): Functor[Bifunctor.LeftBiased[C][R]] = 
       B.leftFunctor[R]
 
-object Functor extends BifunctorCanBeFunctor 
+trait ApplicativeIsFunctor extends BifunctorCanBeFunctor
+  given [C[_]](given A: Applicative[C]): Functor[C] = A.functor
+
+object Functor extends ApplicativeIsFunctor 
   trait FunctorOps[C[_],A]
     def [B] (fa: C[A]) map (f: A => B)(given F: Functor[C]): C[B] = F.map(fa, f)
 
