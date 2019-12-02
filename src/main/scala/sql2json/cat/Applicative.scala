@@ -45,3 +45,8 @@ object Applicative extends ApplicativeErrorProvidesApplicative
 
   given[A]: ApplicativeLifts[A]
   given[C[_],A]: ApplicativeOps[C, A]
+
+  given Applicative[List]
+    def pure[A](a: A): List[A] = a :: Nil
+
+    def ap[A, B](cf: List[A => B], ca: List[A]): List[B] = cf.flatMap(ca.map(_))

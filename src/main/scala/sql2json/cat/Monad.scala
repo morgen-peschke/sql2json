@@ -14,3 +14,6 @@ object Monad extends MonadErrorProvidesMonad
     def[B] (ca: C[A]) >=> (fc: A => C[B])(given M: Monad[C]): C[B] = M.flatMap(ca, fc)
 
   given[C[_],A]: MonadOps[C,A]
+
+  given Monad[List]
+    def flatMap[A,B](ca: List[A], fc: A => List[B]): List[B] = ca.flatMap(fc)

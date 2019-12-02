@@ -19,3 +19,6 @@ object Functor extends ApplicativeIsFunctor
     def [B] (fa: C[A]) map (f: A => B)(given F: Functor[C]): C[B] = F.map(fa, f)
 
   given [C[_],A]: FunctorOps[C,A]
+
+  given Functor[List]
+    def map [A,B] (fa: List[A], f: A => B): List[B] = fa.map(f)

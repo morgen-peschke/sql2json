@@ -2,7 +2,6 @@ package sql2json
 package testing
 
 import types.NonEmptyList
-import cat.Functor.given
 
 /**
  * Dual of [[Gen]], mostly used to create instances
@@ -18,4 +17,5 @@ object Cogen
   given Cogen[Long] = identity(_)
   given Cogen[String] = _.foldLeft(0L)(_ + _.hashCode.toLong)
   given Cogen[Boolean] = if _ then 0L else 1L
+  given [A](given A: Cogen[A]): Cogen[List[A]] = _.map(A.toSeed).foldLeft(0L)(_ + _)
   given [A](given A: Cogen[A]): Cogen[NonEmptyList[A]] = _.map(A.toSeed).fold

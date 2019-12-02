@@ -21,6 +21,10 @@ object Gen
   given Gen[String] = usingRandom(rng => rng.nextString(rng.nextInt(100)))
   given Gen[Boolean] = usingRandom(_.nextBoolean)
   
+  given[A](given GA: Gen[A]): Gen[List[A]] = usingRandom { rng => 
+    List.fill(rng.nextInt(20))(rng.nextLong).map(GA.fromSeed)
+  }
+
   given[A](given GA: Gen[A]): Gen[NonEmptyList[A]] = usingRandom { rng => 
     val size = rng.nextInt(20)
     val head = GA.fromSeed(rng.nextLong)
