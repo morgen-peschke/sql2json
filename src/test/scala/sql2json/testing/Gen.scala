@@ -1,6 +1,7 @@
 package sql2json
 package testing
 
+import cat.Functor
 import types.NonEmptyList
 import scala.util.Random
 
@@ -16,11 +17,14 @@ object Gen
 
   def usingRandom[A](body: Random => A): Gen[A] = seed => body(new Random(seed))
 
+  given Functor[Gen]
+    def map [A,B] (fa: Gen[A], f: A => B): Gen[B] = seed => f(fa.fromSeed(seed))
+
   given Gen[Int] = _.toInt
   given Gen[Long] = identity(_)
   given Gen[String] = usingRandom(rng => rng.nextString(rng.nextInt(100)))
   given Gen[Boolean] = usingRandom(_.nextBoolean)
-  
+
   given[A](given GA: Gen[A]): Gen[List[A]] = usingRandom { rng => 
     List.fill(rng.nextInt(20))(rng.nextLong).map(GA.fromSeed)
   }

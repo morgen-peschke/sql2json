@@ -19,6 +19,16 @@ enum Result
   case Failed(description: String)
 
 object Result
+  /**
+   * Helper to combine two results
+   */
+  def both(a: Result, b: Result): Result = 
+    (a, b) match 
+      case (Passed(aDesc), Passed(bDesc)) => Passed(s"($aDesc) and ($bDesc)")
+      case (Passed(aDesc), Failed(bDesc)) => Failed(s"($aDesc) but ($bDesc)")
+      case (Failed(aDesc), Passed(bDesc)) => Failed(s"($bDesc) but ($aDesc)")
+      case (Failed(aDesc), Failed(bDesc)) => Failed(s"($aDesc) and ($bDesc)")
+
   trait ResultOps
     /**
      * Compares two values, saving off a representation of this comparison so the [[Matcher]] implementation
@@ -26,9 +36,9 @@ object Result
      */
     def[A: Show: Eq] (a: A) <-> (b: A): Result = 
       if a === b
-      then Result.Passed(s"${a.show} === ${b.show}")
-      else Result.Failed(s"${a.show} =!= ${b.show}")
-
+      then Passed(s"${a.show} === ${b.show}")
+      else Failed(s"${a.show} =!= ${b.show}")
+    
     /**
      * Add a prefix to the test description.
      *
@@ -38,6 +48,12 @@ object Result
       result match
         case Passed(desc) => Passed(s"$prefix$desc")
         case Failed(desc) => Failed(s"$prefix$desc")
+
+    /**
+     * Alternate form of `withClue`, that's sometimes easier to use
+     */
+    def (prefix: String) asClue (result: Result): Result = 
+      result withClue prefix
 
   given syntax: ResultOps
 

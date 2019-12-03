@@ -9,7 +9,7 @@ import config.ConfigReader.DefaultConfigReader
 import cli.Arguments
 import types.Validated.given
 import types.FailFastValidated.given
-import types.Done.done
+import types.Done.given
 import types.Generator.Action.given
 import jdbc.OutputType
 import jdbc.Sql.query

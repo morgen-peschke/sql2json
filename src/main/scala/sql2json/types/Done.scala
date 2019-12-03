@@ -10,7 +10,10 @@ sealed abstract class Done
 object Done extends Done
   def upcast: Done = this
 
-  def [A] (a: A) done: Done = Done
+  trait DoneOps
+    def[A] (a: A) done: Done = Done
+
+  given DoneOps
 
   given Show[Done] = _ => "Done"
   given Eq[Done] = _ == _

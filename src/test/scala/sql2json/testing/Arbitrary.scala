@@ -90,6 +90,13 @@ object Arbitrary
             private val genA = ca.gen
             def next(): B = genF.next()(genA.next())
 
+  given Monad[Arbitrary]
+    def flatMap[A,B](ca: Arbitrary[A], fc: A => Arbitrary[B]): Arbitrary[B] =
+      val genMaker = ca.map(fc).map(_.gen)
+      new Arbitrary[B] with
+          def gen: Generator[B] = genMaker.gen.next()
+
+
   given [A,B](given A: Arbitrary[A], B: Arbitrary[B]): Arbitrary[A ~ B] = A |@| B
 
   given Arbitrary[Boolean] = choose[Boolean](true, false)

@@ -5,7 +5,7 @@ import cat.Show
 import Show.given
 import types.{Validated,Done,Generator}
 import Generator.Action
-import Done.done
+import Done.given
 import types.json.Json
 import Username.username
 import Password.password
@@ -68,11 +68,10 @@ object Sql
     )
 
   def results(rs: ResultSet, outputType: OutputType): Generator[Json] =
-    Generator.unfold(rs) { resultSet => 
-      if (resultSet.next())
-        Action.Continue(resultSet.asRow.resultSetAsJson(outputType)(given rs.getMetaData))
-      else
-        Action.Stop(Json.nil)
-    }.takeUntil(Json.nil)
+    Generator.unfold(rs, resultSet => {
+      if resultSet.next()
+      then Action.Continue(resultSet.asRow.resultSetAsJson(outputType)(given rs.getMetaData))
+      else Action.Stop(Json.nil)
+    }).takeUntil(Json.nil)
 
     
