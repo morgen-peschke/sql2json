@@ -36,3 +36,9 @@ object Eq
               lh === rh && loop(lt, rt)
     
     loop(_, _)
+
+  given[A: Eq]: Eq[Option[A]] = 
+    (_, _) match 
+      case (None, None) => true
+      case (Some(a), Some(b)) => a === b
+      case _ => false

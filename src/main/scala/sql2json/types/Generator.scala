@@ -44,7 +44,8 @@ trait Generator[A]
   def flatMap[B](f: A => Generator[B]): Generator[B] = new Generator.FlatMap(f, this)
   def take(count: Long): Generator[A] = new Generator.Take(count, this)
   def takeWhile(p: A => Boolean): Generator[A] = new Generator.TakeWhile(p, this)
-  def takeUntil(sentinel: A)(given Show[A]): Generator[A] = new Generator.TakeUntil(sentinel, this)
+  def takeUntil(sentinel: A)(given Show[A], Eq[A]): Generator[A] = new Generator.TakeUntil(sentinel, this)
+  def dropWhile(sentinel: A)(given Show[A], Eq[A]): Generator[A] = new Generator.DropWhile(sentinel, this)
 
   /**
    * Materialize to a list - do not call on infinite generators
@@ -324,14 +325,14 @@ object Generator
           else accum.stop
         })
     
-  class TakeUntil[A: Show](sentinel: A, base: Generator[A]) extends Generator[A]
+  class TakeUntil[A: Show: Eq](sentinel: A, base: Generator[A]) extends Generator[A]
     override def toString: String = s"$base.until(${sentinel.show})"
 
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] =
       base.foldLeft(
         initial, 
         (accum, value) => {
-          if (value == sentinel) then halt
+          if value === sentinel then halt
           else f(accum, value)
         })
 
@@ -342,3 +343,15 @@ object Generator
       first.foldLeft(initial, f) match
         case f @ Result.Failure(_, _) => f
         case Result.Success(result) => second.foldLeft(result, f)
+
+  class DropWhile[A: Show: Eq](sentinel: A, base: Generator[A]) extends Generator[A]
+    override def toString: String = s"$base.dropWhile(${sentinel.show})"
+
+    def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] =
+      base.foldLeft[(B, Boolean)](
+        (initial, false),
+        (_, _) match {
+          case ((accum, false), element) if element === sentinel => (accum, false).continue
+          case ((accum, _), element) => f(accum, element).map(_ -> true)
+        }
+      ).map(_._1)

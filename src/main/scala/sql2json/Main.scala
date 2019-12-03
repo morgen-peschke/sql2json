@@ -12,7 +12,7 @@ import types.FailFastValidated.given
 import types.Done.given
 import types.Generator.Action.given
 import jdbc.{OutputType, Sql}
-import jdbc.Sql.query
+import jdbc.Sql.executeAll
 import java.io.{BufferedReader, InputStreamReader}
 import java.util.stream.Collector
 
@@ -30,13 +30,8 @@ object Main
         case Right(config) =>
           val sqlReader = new BufferedReader(new InputStreamReader(System.in))
           try 
-            sqlReader.lines.collect(Collector.of[String, StringBuilder, Sql](
-              () => new StringBuilder,
-              (builder, line) => builder.append(line),
-              (a, b) => a.appendAll(b),
-              (b: StringBuilder) => Sql(b.toString)
-            ))
-            .query(config.dbConfig, config.format)
+            sqlReader.lines.collect(Sql.collector)
+            .executeAll(config.dbConfig, config.format)
             .foreach { result =>
               println(result.show).done.continue
             }

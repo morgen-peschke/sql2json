@@ -8,6 +8,7 @@ import Generator.Result.given
 import cat.{Eq,Show,Functor}
 import cat.Applicative.{~, given}
 import cat.ApplicativeError.given
+import cat.SemigroupK.given
 import cat.Functor.given
 import cat.Monad.given
 import cat.MonadError.given
@@ -214,21 +215,31 @@ final class SimpleGeneratorVariantTests
         take <- Arbitrary.between(0, list.length + 10)
       yield (list, take)
 
-    forAll[(List[Int], Int)]("Generator.fromList(...).take(...).toList equivalence with List.take") { 
+    forAll[(List[Int], Int)]("Generator#take(...).toList equivalence with List.take") { 
       case (list, length) =>
         Generator.fromList(list).take(length.toLong).toList <-> list.take(length).success
     }
 
   @Test def takeWhileShouldBehaveLikeTakeWhileOnList(): Unit = 
     given: Arbitrary[Int] = Arbitrary.between(0, 20)
-    forAll[Int]("Generator.from(...).takeWhile(...).toList equivalence with List.takeWhile") { length =>
+    forAll[Int]("Generator#takeWhile(...).toList equivalence with List.takeWhile") { length =>
       Generator.from[Int](0).takeWhile(_ < length).toList <-> (0 to length + 3).takeWhile(_ < length).toList.success
     }
 
   @Test def takeUntilShouldOmitTheSentinel(): Unit = 
     given: Arbitrary[Int] = Arbitrary.between(0, 20)
-    forAll[Int]("Generator.from(...).takeUntil(...).toList equivalence with List.takeWhile") { length =>
+    forAll[Int]("Generator#takeUntil(...).toList equivalence with List.takeWhile") { length =>
       Generator.from[Int](0).takeUntil(length).toList <-> (0 to length + 3).takeWhile(_ != length).toList.success
+    }
+
+  @Test def dropUntilShouldOmitLeadingSentinelValues(): Unit = 
+    given: Arbitrary[Int] = Arbitrary.between(0, 20)
+    forAll[Int ~ NonEmptyList[Long]]("Generator#dropUntil(...).toList equivalence with List.dropWhile") { 
+      case padding ~ nel => 
+        // The inversion of nel.head is to ensure we don't run into a situation where the next element past the sentinels
+        // we add is also the sentinel value
+        val base = Generator.const(nel.head).take(padding.toLong) combineK Generator.fromList(-nel.head :: nel.tail)
+        base.dropWhile(nel.head).toList <-> (-nel.head :: nel.tail).success
     }
 
 object GeneratorLawTests

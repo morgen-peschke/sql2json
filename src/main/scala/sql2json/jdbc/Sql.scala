@@ -15,7 +15,8 @@ import JdbcUrl.connect
 import Row.{asRow, resultSetAsJson, metaDataAsJson}
 
 import java.util.Properties
-import java.sql.{Connection, DriverManager, Statement, ResultSet, ResultSetMetaData}
+import java.util.stream.Collector
+import java.sql.{Connection, DriverManager, Statement, ResultSet, ResultSetMetaData, SQLException}
 
 given Show[ResultSet] = _.toString
 
@@ -30,6 +31,60 @@ object Sql
   def apply(q: String): Sql = q
 
   given Show[Sql] = identity(_)
+
+  class SqlCollectorState(var buffer: List[Sql], var builder: StringBuilder)
+    override def toString(): String = s"SqlCollectorState($buffer, $builder)"
+
+    def append(line: String): Unit = {
+      line match
+        case ";" if builder.isEmpty => ()
+        case ";" => 
+          buffer = Sql(builder.toString) :: buffer
+          builder = new StringBuilder
+        case notDelim => 
+          builder.append(notDelim).append(' ')
+    }
+
+    def combine(other: SqlCollectorState): SqlCollectorState = 
+      throw new IllegalStateException("Combining SqlCollectorState is undefined")
+
+    def finish: List[Sql] = (Sql(builder.toString) :: buffer).reverse
+
+  object SqlCollectorState
+    def init: SqlCollectorState = SqlCollectorState(Nil, new StringBuilder)
+
+  val collector: Collector[String, SqlCollectorState, List[Sql]] = 
+    Collector.of[String, SqlCollectorState, List[Sql]](
+      () => SqlCollectorState.init,
+      _ append _,
+      _ combine _,
+      _.finish
+    )
+
+  def (statements: List[Sql]) executeAll (dbConfig: DBConfig, outputType: OutputType): Generator[Json] =
+    def loop(connection: Connection, remaining: List[Sql]): Generator[Json] =
+      remaining match
+        case Nil => Generator.empty[Json]
+        case last :: Nil => 
+          for 
+            stmt <- statement(connection)
+            rs   <- query(stmt, last)
+            json <- columnInfo(rs, outputType).combineK(results(rs, outputType))
+          yield json
+        case notLast :: rest => 
+          val genResult = 
+            for
+              stmt <- statement(connection)
+            yield 
+              try stmt.execute(notLast)
+              catch 
+                case ex: Exception => throw new RuntimeException(s"Failed to execute: $notLast", ex)
+              Json.nil
+
+          genResult combineK loop(connection, rest)
+        
+    connection(dbConfig).flatMap(loop(_, statements)).dropWhile(Json.nil)
+      
 
   def (sql: Sql) query (dbConfig: DBConfig, outputType: OutputType): Generator[Json] = 
     for 
@@ -61,10 +116,17 @@ object Sql
       _.close().done
     )
 
+  def execute(statement: Statement, sql: String): Validated[Done] = 
+    Validated.catchOnly[SQLException](statement.execute(sql).done)
+
   def query(statement: Statement, sql: String): Generator[ResultSet] = 
     Generator.ofResource(
-      "ResultSet",
-      () => statement.executeQuery(sql),
+      "Query:ResultSet",
+      () => {
+        try statement.executeQuery(sql)
+        catch 
+          case ex: Exception => throw new RuntimeException(s"Failed to run: $sql", ex)
+      },
       _.close().done
     )
 

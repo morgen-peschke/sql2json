@@ -2,8 +2,9 @@ package sql2json
 package types
 package json
 
-import cat.Show
+import cat.{Show, Eq}
 import Show.given
+import Eq.given
 
 /**
  * Very simple JSON representation.
@@ -51,6 +52,24 @@ object Json
       }
       .append('"')
       .toString
+
+  given Eq[Json] = 
+    (_, _) match
+      case (Json.Nil, Json.Nil) 
+        |  (Json.Bool(true), Json.Bool(true))
+        |  (Json.Bool(false), Json.Bool(false)) => true
+      case (Json.Number(a), Json.Number(b)) => a == b
+      case (Json.Text(a), Json.Text(b)) => a == b
+      case (Json.Array(a), Json.Array(b)) => 
+        a.length == b.length && (a zip b).forall(_ === _)
+      case (Json.Object(a), Json.Object(b)) =>
+        val aKeys = a.keySet
+        val bKeys = b.keySet
+        aKeys == bKeys && aKeys.forall { k => 
+          a.get(k) === b.get(k)
+        }
+      case _ => false 
+
 
   given Show[Json] = _ match
     case Json.Nil => "null"
