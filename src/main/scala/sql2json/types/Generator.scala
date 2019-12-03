@@ -20,7 +20,7 @@ import scala.annotation.tailrec
 /**
  * The idea for this was shamelessly ripped off of [Li Haoyi's `geny`](https://github.com/lihaoyi/geny).
  * 
- * The implementation is my own, so don't judge his code by this (particularly as I think it's got a bug in it).
+ * The implementation is my own, so don't judge his code by this.
  */
 trait Generator[A]
   def foldLeft[B](initial: B, f: (B, A) => Action[B]): Generator.Result[B]
@@ -163,6 +163,9 @@ object Generator
 
   given Monad[Generator]
     def flatMap[A,B](ca: Generator[A], fc: A => Generator[B]): Generator[B] = ca.flatMap(fc)
+
+  given SemigroupK[Generator]
+    def combineK[A] (a: Generator[A], b: Generator[A]): Generator[A] = new Concat(a, b)
 
   class Empty[A] extends Generator[A]
     override def toString: String = "Generator.empty"
@@ -331,3 +334,11 @@ object Generator
           if (value == sentinel) then halt
           else f(accum, value)
         })
+
+  class Concat[A](first: Generator[A], second: Generator[A]) extends Generator[A]
+    override def toString: String = s"$first.concat($second)"
+
+    def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] =
+      first.foldLeft(initial, f) match
+        case f @ Result.Failure(_, _) => f
+        case Result.Success(result) => second.foldLeft(result, f)

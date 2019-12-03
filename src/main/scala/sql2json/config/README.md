@@ -37,7 +37,11 @@ section
   ;
 
 section-name 
-  : ( non-whitespace - bracket-chars )+
+  : (section-char - "-") section-chars*
+  ;
+
+section-char
+  : non-whitespace - bracket-chars
   ;
 
 bracket-chars

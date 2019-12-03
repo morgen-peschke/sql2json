@@ -1,6 +1,7 @@
 package sql2json
 package jdbc
 
+import cat.Show
 import java.sql.{ResultSet,ResultSetMetaData,Types}
 import types.json.Json
 import types.json.Serialize.given
@@ -8,16 +9,34 @@ import Row.asRow
 
 sealed abstract class OutputType 
 object OutputType
-  case object Array extends OutputType
+  case object BareArray extends OutputType
+  case class ArrayWithHeader(verbose: Boolean) extends OutputType
   case object Object extends OutputType
+
+  given Show[OutputType] = _ match
+    case Object => "object"
+    case BareArray => "array"
+    case ArrayWithHeader(true) => "array with fancy header"
+    case ArrayWithHeader(false) => "array with header"
 
 opaque type Row = ResultSet
 object Row
   def (rs: ResultSet) asRow: Row = rs
 
+  def (rs: Row) metaDataAsJson(meta: ResultSetMetaData, verbose: Boolean): Json = 
+    val columnJson: Int => Json = 
+      if verbose 
+        then (i: Int) => Json.obj(
+          "label" -> meta.getColumnLabel(i).toJson,
+          "type" -> meta.getColumnTypeName(i).toJson
+        )
+        else meta.getColumnLabel(_: Int).toJson
+
+    Json.Array((1 to meta.getColumnCount).map(columnJson).toVector)
+
   def (rs: Row) resultSetAsJson(outputType: OutputType)(given meta: ResultSetMetaData): Json = 
     outputType match
-      case OutputType.Array => Json.Array((1 to meta.getColumnCount).toVector.map(rs.col(_)))
+      case OutputType.BareArray | OutputType.ArrayWithHeader(_) => Json.Array((1 to meta.getColumnCount).toVector.map(rs.col(_)))
       case OutputType.Object => 
         Json.Object((1 to meta.getColumnCount).map { i => 
           meta.getColumnLabel(i) -> rs.col(i)
@@ -31,7 +50,7 @@ object Row
         else 
           try
             val arrayRs = array.getResultSet
-            try arrayRs.asRow.resultSetAsJson(OutputType.Array)(given arrayRs.getMetaData)
+            try arrayRs.asRow.resultSetAsJson(OutputType.BareArray)(given arrayRs.getMetaData)
             finally arrayRs.close()
           finally array.free()
       case Types.BIGINT => 

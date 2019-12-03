@@ -7,12 +7,14 @@ import cat.Show
 import Show.given
 import config.ConfigReader.DefaultConfigReader
 import cli.Arguments
-import types.Validated.given
+import types.Validated.{Invalid, given}
 import types.FailFastValidated.given
 import types.Done.given
 import types.Generator.Action.given
-import jdbc.OutputType
+import jdbc.{OutputType, Sql}
 import jdbc.Sql.query
+import java.io.{BufferedReader, InputStreamReader}
+import java.util.stream.Collector
 
 given Show[Path]
   def show(a: Path): String = a.getFileName.toString
@@ -25,10 +27,24 @@ object Main
         case Left(helpText) => 
           helpText.toList.foreach(System.out.println)
           System.exit(1)
-        case Right(result) =>
-          result
-            .sql
-            .query(result.dbConfig, OutputType.Object)
+        case Right(config) =>
+          val sqlReader = new BufferedReader(new InputStreamReader(System.in))
+          try 
+            sqlReader.lines.collect(Collector.of[String, StringBuilder, Sql](
+              () => new StringBuilder,
+              (builder, line) => builder.append(line),
+              (a, b) => a.appendAll(b),
+              (b: StringBuilder) => Sql(b.toString)
+            ))
+            .query(config.dbConfig, config.format)
             .foreach { result =>
               println(result.show).done.continue
             }
+            .asValidated match
+              case Invalid(errors) =>
+                errors.toList.foreach(System.err.println(_))
+                System.exit(10)
+              case _ =>
+                System.exit(0)
+          finally
+            sqlReader.close()

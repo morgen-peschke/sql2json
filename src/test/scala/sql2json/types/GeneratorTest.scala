@@ -242,3 +242,4 @@ object GeneratorLawTests
   final class GeneratorFunctorLaws extends FunctorLaws[Generator, Int, String, Long]
   final class GeneratorApplicativeLaws extends ApplicativeLaws[Generator, Int, String, Long]
   final class GeneratorMonadLaws extends MonadLaws[Generator, Int, String]
+  final class GeneratorSemigroupLaws extends SemigroupLaws[Generator[Int]]

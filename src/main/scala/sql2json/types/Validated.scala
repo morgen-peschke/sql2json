@@ -33,12 +33,17 @@ object Validated
       catch 
         case ct(ex) => ex.toString.invalid
 
-  object Valid {
+  object Valid 
     def unapply[A](va: Validated[A]): Option[A] = 
       va match 
         case Right(a) => Some(a)
         case _ => None
-  }
+  
+  object Invalid 
+    def unapply[A](va: Validated[A]): Option[Errors] =
+      va match
+        case Left(errors) => Some(errors)
+        case _ => None
 
   given[A](given Show[A]): Show[Validated[A]] =
      _ match

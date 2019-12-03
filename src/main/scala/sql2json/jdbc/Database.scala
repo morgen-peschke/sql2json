@@ -9,6 +9,7 @@ object Database
   def apply(raw: String): Validated[Database] =
     raw match 
       case "" => "Database label cannot be empty".invalid
+      case junk if junk.startsWith("-") => "Database lable cannot start with '-'".invalid
       case dbName => dbName.valid
 
   given cat.Show[Database] = identity(_)

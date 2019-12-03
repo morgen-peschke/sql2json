@@ -2,16 +2,17 @@ package sql2json
 package jdbc
 
 import cat.Show
+import cat.SemigroupK.given
 import Show.given
 import types.{Validated,Done,Generator}
-import Generator.Action
+import Generator.Action.{halt,given}
 import Done.given
 import types.json.Json
 import Username.username
 import Password.password
 import config.DBConfig
 import JdbcUrl.connect
-import Row.{asRow, resultSetAsJson}
+import Row.{asRow, resultSetAsJson, metaDataAsJson}
 
 import java.util.Properties
 import java.sql.{Connection, DriverManager, Statement, ResultSet, ResultSetMetaData}
@@ -35,7 +36,7 @@ object Sql
       conn <- connection(dbConfig)
       stmt <- statement(conn)
       rs   <- query(stmt, sql)
-      json <- results(rs, outputType)
+      json <- columnInfo(rs, outputType).combineK(results(rs, outputType))
     yield json
 
   def connection(dbConfig: DBConfig): Generator[Connection] =
@@ -67,11 +68,17 @@ object Sql
       _.close().done
     )
 
+  def columnInfo(rs: ResultSet, outputType: OutputType): Generator[Json] =
+    outputType match
+      case OutputType.ArrayWithHeader(verbose) =>
+        Generator.one[Json](rs.asRow.metaDataAsJson(rs.getMetaData, verbose))
+      case _ => Generator.empty[Json]
+
   def results(rs: ResultSet, outputType: OutputType): Generator[Json] =
     Generator.unfold(rs, resultSet => {
       if resultSet.next()
-      then Action.Continue(resultSet.asRow.resultSetAsJson(outputType)(given rs.getMetaData))
-      else Action.Stop(Json.nil)
-    }).takeUntil(Json.nil)
+      then resultSet.asRow.resultSetAsJson(outputType)(given rs.getMetaData).continue
+      else halt
+    })
 
     
