@@ -147,7 +147,8 @@ object Generator
 
   def empty[A]: Generator[A] = new Empty[A]
   def one[A: Show](value: A): Generator[A] = new One(value)
-  def fromList[A: Show](values: List[A]): Generator[A] = new fromList(values)
+  def fromList[A: Show](values: List[A]): Generator[A] = new FromList(values)
+  def fromStream[A](stream: () => java.util.stream.Stream[A]): Generator[A] = new FromStream(stream)
   def const[A: Show](value: A): Generator[A] = new Const(value)
   def continually[A](value: => A): Generator[A] = new Continually(value)
   def calculate[A: Show](seed: A, step: A => Action[A]): Generator[A] = new Calculate(seed, step)
@@ -182,7 +183,7 @@ object Generator
     override def fold(given Monoid[A]): Result[A] = value.success
     override def foldK[C[_]: Applicative: MonoidK]: Result[C[A]] = value.pure.success
 
-  class fromList[A: Show](values: List[A]) extends Generator[A]
+  class FromList[A: Show](values: List[A]) extends Generator[A]
     override def toString: String = s"Generator.ofList(${values.show})"
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] = 
       @tailrec
@@ -195,6 +196,24 @@ object Generator
               case action => action.asResult(accum)
           
       loop(initial, values)
+
+  class FromStream[A](stream: () => java.util.stream.Stream[A]) extends Generator[A]
+    override def toString: String = "Generator.fromStream(???)"
+
+    private class CollectorState[B](var current: Action[B])
+
+    def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] = 
+      stream()
+        .collect(java.util.stream.Collector.of(
+          () => CollectorState(initial.continue),
+          (state, element) => state.current = state.current match {
+            case Action.Continue(accum) => f(accum, element)
+            case action => action
+          },
+          (_, _) => throw new IllegalStateException("Merge not supported"),
+          _.current.asResult(initial)
+        ))
+    
 
   class Const[A: Show](value: A) extends Generator[A]
     override def toString: String = s"Generator.const(${value.show})"

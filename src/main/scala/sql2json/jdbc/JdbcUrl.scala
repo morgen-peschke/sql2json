@@ -18,9 +18,5 @@ object JdbcUrl
   
   given Show[JdbcUrl] = identity(_)
 
-  def (url: JdbcUrl) connect (props: Properties): Connection =
-    Class
-      .forName("org.postgresql.Driver")
-      .newInstance
-      .asInstanceOf[Driver]
-      .connect(url, props)
+  def (driver: Driver) connect (url: JdbcUrl)(props: Properties): Connection =
+    driver.connect(url, props)

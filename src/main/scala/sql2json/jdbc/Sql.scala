@@ -12,6 +12,7 @@ import Username.username
 import Password.password
 import config.DBConfig
 import JdbcUrl.connect
+import Driver.load
 import Row.{asRow, resultSetAsJson, metaDataAsJson}
 
 import java.util.Properties
@@ -98,7 +99,7 @@ object Sql
     Generator.ofResource(
       dbConfig.show,
       () => {
-        val connection = dbConfig.jdbcURL.connect {
+        val connection = dbConfig.driver.load.connect(dbConfig.jdbcURL) {
           new Properties()
             .username(dbConfig.username)
             .password(dbConfig.password)

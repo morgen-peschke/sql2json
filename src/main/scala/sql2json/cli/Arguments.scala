@@ -11,7 +11,6 @@ import types.{Validated, FailFastValidated, NonEmptyList}
 import types.Validated.given
 import types.FailFastValidated.given
 import config.Config
-import config.ConfigReader.DefaultConfigReader
 import jdbc.{Database, Sql, OutputType}
 import config.DBConfig
 
@@ -24,7 +23,7 @@ object Arguments
   private final val ObjectFmt: String = "object"
 
   final val HelpText =
-    s"""|Usage: sql2json config-file [options]
+    s"""|Usage: sql2json [options]
         |
         | Runs a SQL expression and returns it as lines of JSON. 
         |
@@ -35,6 +34,8 @@ object Arguments
         | All but the last statement are assumed to be commands, and their result sets are ignored. The final
         | statement is assumed to be a query, and it's result set is processed and returned. If the final 
         | statement is not a query, you are using the wrong tool.
+        |
+        | Configuration of credentials & dependecies is handled via HOCON config files.
         |
         | Options
         |   -d --database  name   Selects a database from the config file
@@ -72,24 +73,17 @@ object Arguments
           case Left(errors) => errors.map(e => s"Invalid <name> after $arg: $e").raise[Validated,Arguments].failFast
 
       case Nil =>
-        val validatedDbConfig = 
-          dbNameOpt match 
-            case Some(dbName) => 
-              config.databases.get(dbName).fold(s"No config for database ${dbName.show}".invalid[DBConfig])(_.valid)
-            case None => 
-              config.databases.toList match
-                case Nil => "Empty config".invalid[DBConfig]
-                case (_, single) :: Nil => single.valid
-                case _ => "Unable to fall back to single config".invalid[DBConfig]
-
-        validatedDbConfig.map { dbConfig => 
-          Arguments(
-            dbConfig,
-            if formatAsObject then OutputType.Object
-            else if omitHeader then OutputType.BareArray
-            else OutputType.ArrayWithHeader(verbose)
-          )
-        }.failFast
+        dbNameOpt
+          .fold(config.default)(config.forDatabase)
+          .map { dbConfig => 
+            Arguments(
+              dbConfig,
+              if formatAsObject then OutputType.Object
+              else if omitHeader then OutputType.BareArray
+              else OutputType.ArrayWithHeader(verbose)
+            )
+          }
+          .failFast
 
       case junk => s"Unrecognized argument, starting at: ${junk.show}".invalid.failFast
 
@@ -97,5 +91,4 @@ object Arguments
   def parse(args: Seq[String]): Validated[Arguments] =
     args.toList match
       case Nil => NonEmptyList.of("No arguments", HelpText).raise[Validated, Arguments]
-      case configPath :: rest =>
-        DefaultConfigReader.read(Paths.get(configPath)).failFast.flatMap(processArgs(_, rest)).accumulate
+      case rest => Config.load.failFast.flatMap(processArgs(_, rest)).accumulate
