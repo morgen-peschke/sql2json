@@ -26,7 +26,15 @@ object Arguments
   final val HelpText =
     s"""|Usage: sql2json config-file [options]
         |
-        | Runs a SQL expression and returns it as lines of JSON. The query is read from standard input.
+        | Runs a SQL expression and returns it as lines of JSON. 
+        |
+        | The query is read from standard input. Because I was not about to write anything close to a SQL 
+        | parser, if multiple statements are needed, they must be separate by a line which contains exactly
+        | a single ';'.
+        |
+        | All but the last statement are assumed to be commands, and their result sets are ignored. The final
+        | statement is assumed to be a query, and it's result set is processed and returned. If the final 
+        | statement is not a query, you are using the wrong tool.
         |
         | Options
         |   -d --database  name   Selects a database from the config file
