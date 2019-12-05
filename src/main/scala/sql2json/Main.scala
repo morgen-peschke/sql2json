@@ -38,7 +38,6 @@ object Main
               case Invalid(errors) =>
                 errors.toList.foreach(System.err.println(_))
                 System.exit(10)
-              case _ =>
-                System.exit(0)
+              case _ => ()
           finally
             sqlReader.close()

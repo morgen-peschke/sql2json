@@ -10,6 +10,7 @@ lazy val root = project
     libraryDependencies ++= Seq(
       "com.typesafe" % "config" % "1.4.0",
       "org.postgresql" % "postgresql" % "42.2.8",
+      "mysql" % "mysql-connector-java" % "8.0.18",
       "com.novocode" % "junit-interface" % "0.11" % "test",
       "net.java" % "quickcheck" % "0.6" % "test"
     )

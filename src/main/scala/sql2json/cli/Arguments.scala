@@ -6,17 +6,20 @@ import java.nio.file.{Path,Paths}
 import cat.Show.given
 import cat.Functor.given
 import cat.Monad.given
+import cat.Applicative.given
 import cat.ApplicativeError.given
+import cat.SemigroupK.given
 import types.{Validated, FailFastValidated, NonEmptyList}
 import types.Validated.given
 import types.FailFastValidated.given
+import types.Errors
 import config.Config
 import jdbc.{Database, Sql, OutputType}
 import config.DBConfig
 
 final case class Arguments(dbConfig: DBConfig, format: OutputType)
-
 object Arguments
+  object ShowHelpText
   given cat.Show[Arguments] = a => s"Arguments(dbConfig: ${a.dbConfig.show}, format: ${a.format.show})"
 
   private final val ArrayFmt: String = "array"
@@ -46,7 +49,9 @@ object Arguments
         |
         |   -h --header           Enables emitting a leading header in '$ArrayFmt' format (disabled by default)
         |
-        |   -v --verbose          Enables extra information in the header, when enabled (disabled by default)                
+        |   -v --verbose          Enables extra information in the header, when enabled (disabled by default)
+        |
+        |   --help                Print this help message, then exit               
         |""".stripMargin
 
   private def processArgs(config: Config, 
@@ -54,8 +59,9 @@ object Arguments
                           dbNameOpt: Option[Database] = None,
                           formatAsObject: Boolean = false, 
                           omitHeader: Boolean = true, 
-                          verbose: Boolean = false): FailFastValidated[Arguments] =
+                          verbose: Boolean = false): FailFastValidated[Either[ShowHelpText.type,Arguments]] =
     rest match 
+      case "--help" :: _ => Left(ShowHelpText).valid.failFast
       case ("-h" | "--header") :: remaining => processArgs(config, remaining, dbNameOpt, formatAsObject, false, verbose)
       case ("-v" | "--verbose") :: remaining => processArgs(config, remaining, dbNameOpt, formatAsObject, omitHeader, true)
 
@@ -70,18 +76,18 @@ object Arguments
         case rawName :: remaining => 
           Database(rawName).toEither match
           case Right(dbName) => processArgs(config, remaining, Some(dbName), formatAsObject, omitHeader, verbose)
-          case Left(errors) => errors.map(e => s"Invalid <name> after $arg: $e").raise[Validated,Arguments].failFast
+          case Left(errors) => errors.map(e => s"Invalid <name> after $arg: $e").raise[Validated,Either[ShowHelpText.type,Arguments]].failFast
 
       case Nil =>
         dbNameOpt
           .fold(config.default)(config.forDatabase)
           .map { dbConfig => 
-            Arguments(
+            Right(Arguments(
               dbConfig,
               if formatAsObject then OutputType.Object
               else if omitHeader then OutputType.BareArray
               else OutputType.ArrayWithHeader(verbose)
-            )
+            ))
           }
           .failFast
 
@@ -89,6 +95,13 @@ object Arguments
 
 
   def parse(args: Seq[String]): Validated[Arguments] =
-    args.toList match
-      case Nil => NonEmptyList.of("No arguments", HelpText).raise[Validated, Arguments]
-      case rest => Config.load.failFast.flatMap(processArgs(_, rest)).accumulate
+    val results = args.toList match
+      case Nil => "No arguments".invalid.failFast
+      case rest => Config.load.failFast.flatMap(processArgs(_, rest))
+
+    results
+      .mapError[Errors](_ combineK HelpText.pure[NonEmptyList])
+      .flatMap {
+        case Left(ShowHelpText) => HelpText.invalid.failFast
+        case Right(args) => args.valid.failFast
+      }.accumulate
