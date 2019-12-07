@@ -9,5 +9,8 @@ This exists primarily because of a convergence of factors:
 
 2. If there's a release of Cats for Dotty, I couldn't find it in the amount of 
    time I wanted to put into locating it.
+   
+   Turns out there is [spotted leopards](https://github.com/typelevel/spotted-leopards), but it doesn't appear to be 
+   published.
 
 3. Translating the subset of the implementation here was more fodder for learning Dotty
