@@ -23,6 +23,8 @@ import scala.annotation.tailrec
  * The implementation is my own, so don't judge his code by this.
  */
 trait Generator[A]
+  def name: String
+
   def foldLeft[B](initial: B, f: (B, A) => Action[B]): Generator.Result[B]
 
   def foreach(f: A => Action[Done]): Generator.Result[Done] = 
@@ -57,6 +59,7 @@ trait Generator[A]
     ).map(_.toList)
 
 object Generator
+  given Show[Generator[?]] = _.name
 
   sealed abstract class Result[A]
     def asValidated: Validated[A] = this match
@@ -85,8 +88,8 @@ object Generator
         case _ => false
 
     given[A: Show]: Show[Result[A]] = _ match
-      case Success(a) => s"Success(${a.show})"
-      case Failure(gen, errors) => s"Failure($gen, ${errors.show})"
+      case Success(a) => show"Success($a)"
+      case Failure(gen, errors) => show"Failure($gen, $errors)"
 
     given Functor[Result]
       def map [A,B] (fa: Result[A], f: A => B): Result[B] = 
@@ -132,10 +135,10 @@ object Generator
 
     given[A: Show]: Show[Action[A]] =
        _ match
-        case Continue(r) => s"Continue(${r.show})"
-        case Stop(r) => s"Stop(${r.show})"
+        case Continue(r) => show"Continue($r)"
+        case Stop(r) => show"Stop($r)"
         case Halt() => "Halt()"
-        case Fail(failure) => s"Fail($failure)"
+        case Fail(failure) => show"Fail($failure)"
 
     given[A: Eq]: Eq[Action[A]] =
       (_, _) match
@@ -170,21 +173,21 @@ object Generator
     def combineK[A] (a: Generator[A], b: Generator[A]): Generator[A] = new Concat(a, b)
 
   class Empty[A] extends Generator[A]
-    override def toString: String = "Generator.empty"
+    def name: String = "Generator.empty"
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] = initial.success
     override def foreach(f: A => Action[Done]): Result[Done] = Done.success
     override def fold(given M: Monoid[A]): Result[A] = M.empty.success
     override def foldK[C[_]: Applicative](given MK: MonoidK[C]): Result[C[A]] = MK.emptyK[A].success
 
   class One[A: Show](value: A) extends Generator[A]
-    override def toString: String = s"Generator.one(${value.show})"
+    def name: String = show"Generator.one($value)"
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] = f(initial, value).asResult(initial)
     override def foreach(f: A => Action[Done]): Result[Done] = f(value).asResult(Done)
     override def fold(given Monoid[A]): Result[A] = value.success
     override def foldK[C[_]: Applicative: MonoidK]: Result[C[A]] = value.pure.success
 
   class FromList[A: Show](values: List[A]) extends Generator[A]
-    override def toString: String = s"Generator.ofList(${values.show})"
+    def name: String = show"Generator.ofList($values)"
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] = 
       @tailrec
       def loop(accum: B, remaining: List[A]): Result[B] = 
@@ -198,7 +201,7 @@ object Generator
       loop(initial, values)
 
   class FromStream[A](stream: () => java.util.stream.Stream[A]) extends Generator[A]
-    override def toString: String = "Generator.fromStream(???)"
+    def name: String = "Generator.fromStream(???)"
 
     private class CollectorState[B](var current: Action[B])
 
@@ -216,7 +219,7 @@ object Generator
     
 
   class Const[A: Show](value: A) extends Generator[A]
-    override def toString: String = s"Generator.const(${value.show})"
+    def name: String = show"Generator.const($value)"
     
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] =
       @tailrec
@@ -228,7 +231,7 @@ object Generator
       loop(initial)
     
   class Continually[A](value: => A) extends Generator[A]
-    override def toString: String = "Generator.continually(???)"
+    def name: String = "Generator.continually(???)"
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] =
       @tailrec
       def loop(accum: B): Result[B] = 
@@ -239,8 +242,7 @@ object Generator
       loop(initial)
 
   class Calculate[A: Show](seed: A, step: A => Action[A]) extends Generator[A]
-    override def toString: String = 
-      s"Generator.calculate(${seed.show}, $step)"
+    def name: String = show"Generator.calculate(seed = $seed)"
 
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] =
       @tailrec
@@ -256,7 +258,7 @@ object Generator
         case action => action.asResult(initial)
         
   class From[A: Show](start: A, step: A)(given N: scala.math.Numeric[A]) extends Generator[A]
-    override def toString: String = s"Generator.from(start=${start.show}, step=${step.show})"
+    def name: String = s"Generator.from(start=$start, step=$step)"
 
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] =
       @tailrec
@@ -273,8 +275,8 @@ object Generator
         case action => action.asResult(initial)
 
 
-  class OfResource[A](name: String, aquire: () => A, cleanup: A => Done) extends Generator[A]
-    override def toString: String = s"Generator.ofResource($name)"
+  class OfResource[A](named: String, aquire: () => A, cleanup: A => Done) extends Generator[A]
+    def name: String = s"Generator.ofResource($named)"
     
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] =
       val a = aquire()
@@ -282,7 +284,7 @@ object Generator
       finally cleanup(a)
 
   class Unfold[A: Show,B](seed: A, expand: A => Action[B]) extends Generator[B]
-    override def toString: String = s"Generator.unfold(${seed.show}, $expand)"
+    def name: String = show"Generator.unfold(seed = $seed)"
 
     def foldLeft[C](initial: C, f: (C, B) => Action[C]): Result[C] =
       @tailrec
@@ -297,13 +299,13 @@ object Generator
       loop(initial)
 
   class Map[A,B](fab: A => B, base: Generator[A]) extends Generator[B]
-    override def toString: String = s"$base.map($fab)"
+    def name: String = s"${base.show}.map($fab)"
     
     def foldLeft[C](initial: C, fcb: (C, B) => Action[C]): Result[C] = 
       base.foldLeft(initial, (accum, value) => fcb(accum, fab(value)))
      
   class FlatMap[A,B](fab: A => Generator[B], base: Generator[A]) extends Generator[B]
-    override def toString: String = s"$base.flatMap($fab)"
+    def name: String = s"${base.show}.flatMap($fab)"
 
     def foldLeft[C](initial: C, fcb: (C, B) => Action[C]): Result[C] = 
       base.foldLeft(
@@ -317,7 +319,7 @@ object Generator
       )
   
   class Take[A](amount: Long, base: Generator[A]) extends Generator[A]
-    override def toString: String = s"$base.take($amount)"
+    def name: String = show"$base.take($amount)"
 
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] =
       base.foldLeft(
@@ -334,7 +336,7 @@ object Generator
         }).map(_._1)
 
   class TakeWhile[A](predicate: A => Boolean, base: Generator[A]) extends Generator[A]
-    override def toString: String = s"$base.while($predicate)"
+    def name: String = s"${base.show}.while($predicate)"
 
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] =
       base.foldLeft(
@@ -345,7 +347,7 @@ object Generator
         })
     
   class TakeUntil[A: Show: Eq](sentinel: A, base: Generator[A]) extends Generator[A]
-    override def toString: String = s"$base.until(${sentinel.show})"
+    def name: String = show"$base.until($sentinel)"
 
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] =
       base.foldLeft(
@@ -356,7 +358,7 @@ object Generator
         })
 
   class Concat[A](first: Generator[A], second: Generator[A]) extends Generator[A]
-    override def toString: String = s"$first.concat($second)"
+    def name: String = show"$first.concat($second)"
 
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] =
       first.foldLeft(initial, f) match
@@ -364,7 +366,7 @@ object Generator
         case Result.Success(result) => second.foldLeft(result, f)
 
   class DropWhile[A: Show: Eq](sentinel: A, base: Generator[A]) extends Generator[A]
-    override def toString: String = s"$base.dropWhile(${sentinel.show})"
+    def name: String = show"$base.dropWhile($sentinel)"
 
     def foldLeft[B](initial: B, f: (B, A) => Action[B]): Result[B] =
       base.foldLeft[(B, Boolean)](

@@ -21,7 +21,7 @@ case class DBConfig(
 )
 object DBConfig
   given Show[DBConfig] = 
-    d => s"DBConfig(jdbc-url: ${d.jdbcURL.show}, userName: ${d.username.show}, password: ${d.password.show})"
+    d => show"DBConfig(jdbc-url: ${d.jdbcURL}, userName: ${d.username}, password: ${d.password})"
 
   def fromConfigValue(path: String, cv: ConfigValue): Validated[DBConfig] =
     val conf = cv.atKey("db")
@@ -48,7 +48,7 @@ object DBConfig
 
 case class Config(databases: Map[Database, DBConfig])
   def forDatabase(db: Database): Validated[DBConfig] =
-    databases.get(db).fold(s"No config for ${db.show}".invalid)(_.valid)
+    databases.get(db).fold(show"No config for $db".invalid)(_.valid)
 
   def default: Validated[DBConfig] =
     databases.toList match

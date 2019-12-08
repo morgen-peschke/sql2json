@@ -47,8 +47,8 @@ object Validated
 
   given[A](given Show[A]): Show[Validated[A]] =
      _ match
-        case Right(a) => s"Valid(${a.show})"
-        case Left(e) => s"Invalid(${e.show})"
+        case Right(a) => show"Valid($a)"
+        case Left(e) => show"Invalid($e)"
 
   given[A: Eq]: Eq[Validated[A]] = 
       (_, _) match
@@ -100,8 +100,8 @@ object FailFastValidated
 
   given[A](given Show[A]): Show[FailFastValidated[A]] =
     _ match
-       case Right(a) => s"FailFastValid(${a.show})"
-       case Left(e) => s"FailFastInvalid(${e.show})"
+       case Right(a) => show"FailFastValid($a)"
+       case Left(e) => show"FailFastInvalid($e)"
 
   given[A: Eq]: Eq[FailFastValidated[A]] = 
      (_, _) match

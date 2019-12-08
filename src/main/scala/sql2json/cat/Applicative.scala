@@ -3,6 +3,7 @@ package cat
 
 import Applicative.~
 import Functor.given
+import scala.compiletime.summonFrom
 
 trait Applicative[C[_]](given val functor: Functor[C])
   def pure[A](a: A): C[A]

@@ -29,7 +29,7 @@ object NonEmptyList
   def one[A](head: A): NonEmptyList[A] = NonEmptyList(head, Nil)
   def of[A](head: A, tail0: A, tailN: A*): NonEmptyList[A] = NonEmptyList(head, tail0 :: tailN.toList)
 
-  given[A] (given Show[A]): Show[NonEmptyList[A]] = _.toList.map(_.show).mkString("[", ",", "]")
+  given[A] (given Show[A]): Show[NonEmptyList[A]] = _.toList.show
   
   given[A] (given Eq[A]): Eq[NonEmptyList[A]]
     def equiv(nelA: NonEmptyList[A], nelB: NonEmptyList[A]): Boolean = 

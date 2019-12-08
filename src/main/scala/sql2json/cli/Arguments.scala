@@ -20,7 +20,7 @@ import config.DBConfig
 final case class Arguments(dbConfig: DBConfig, format: OutputType)
 object Arguments
   object ShowHelpText
-  given cat.Show[Arguments] = a => s"Arguments(dbConfig: ${a.dbConfig.show}, format: ${a.format.show})"
+  given cat.Show[Arguments] = a => show"Arguments(dbConfig: ${a.dbConfig}, format: ${a.format})"
 
   private final val ArrayFmt: String = "array"
   private final val ObjectFmt: String = "object"
@@ -91,7 +91,7 @@ object Arguments
           }
           .failFast
 
-      case junk => s"Unrecognized argument, starting at: ${junk.show}".invalid.failFast
+      case junk => show"Unrecognized argument, starting at: $junk".invalid.failFast
 
 
   def parse(args: Seq[String]): Validated[Arguments] =
