@@ -3,8 +3,8 @@ package jdbc
 
 import cat.Show
 import cat.SemigroupK.given
-import Show.given
 import types.{Validated,Done,Generator}
+import Show.show
 import Generator.Action.{halt,given}
 import Done.given
 import types.json.Json

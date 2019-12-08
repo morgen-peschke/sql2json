@@ -7,7 +7,7 @@ import cat.ApplicativeError.given
 import cat.Functor.given
 import cat.Semigroup.given
 import cat.SemigroupK.given
-import cat.Show.given
+import cat.Show.show
 import cat.Eq.given
 import Done.given
 import Generator.{Action, given}

@@ -3,7 +3,8 @@ package cli
 
 import java.nio.file.{Path,Paths}
 
-import cat.Show.given
+import cat.Show
+import cat.Show.show
 import cat.Functor.given
 import cat.Monad.given
 import cat.Applicative.given
@@ -20,7 +21,7 @@ import config.DBConfig
 final case class Arguments(dbConfig: DBConfig, format: OutputType)
 object Arguments
   object ShowHelpText
-  given cat.Show[Arguments] = a => show"Arguments(dbConfig: ${a.dbConfig}, format: ${a.format})"
+  given Show[Arguments] = a => show"Arguments(dbConfig: ${a.dbConfig}, format: ${a.format})"
 
   private final val ArrayFmt: String = "array"
   private final val ObjectFmt: String = "object"

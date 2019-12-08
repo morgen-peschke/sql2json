@@ -4,7 +4,7 @@ import java.nio.file.Path
 
 import cat.ApplicativeError.given
 import cat.Show
-import Show.given
+import Show.show
 import cli.Arguments
 import types.Validated.{Invalid, given}
 import types.FailFastValidated.given

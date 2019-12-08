@@ -7,7 +7,7 @@ import types.Validated.given
 import types.FailFastValidated.given
 import jdbc.{JdbcUrl, Database, Driver, Username, Password}
 import cat.Show
-import Show.given
+import Show.show
 import cat.Functor.given
 import cat.Applicative.{~,given}
 import cat.Semigroup.given

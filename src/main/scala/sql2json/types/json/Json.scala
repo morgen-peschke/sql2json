@@ -3,7 +3,7 @@ package types
 package json
 
 import cat.{Show, Eq}
-import Show.given
+import Show.show
 import Eq.given
 
 /**

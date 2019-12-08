@@ -2,7 +2,7 @@ package sql2json
 package types
 
 import cat.{Applicative, Show, Eq, SemigroupK, Functor, Monoid, Monad}
-import cat.Show.given
+import cat.Show.show
 import cat.Eq.given
 import cat.Monoid.given
 import cat.Semigroup.given
