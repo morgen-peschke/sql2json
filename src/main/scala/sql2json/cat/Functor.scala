@@ -4,14 +4,7 @@ package cat
 trait Functor[C[_]]
   def map [A,B] (fa: C[A], f: A => B): C[B]
 
-trait BifunctorCanBeFunctor
-  given [C[_,_],L](given B: Bifunctor[C]): Functor[Bifunctor.RightBiased[C][L]] = 
-    B.rightFunctor[L]
-
-  given [C[_,_],R](given B: Bifunctor[C]): Functor[Bifunctor.LeftBiased[C][R]] = 
-      B.leftFunctor[R]
-
-trait ApplicativeIsFunctor extends BifunctorCanBeFunctor
+trait ApplicativeIsFunctor
   given [C[_]](given A: Applicative[C]): Functor[C] = A.functor
 
 object Functor extends ApplicativeIsFunctor 
