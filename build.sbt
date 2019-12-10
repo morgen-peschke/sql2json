@@ -1,4 +1,5 @@
 val dottyVersion = "0.20.0-RC1"
+enablePlugins(PackPlugin)
 
 lazy val root = project
   .in(file("."))
