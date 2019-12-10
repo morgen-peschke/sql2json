@@ -1,8 +1,8 @@
 package sql2json
 package jdbc
 
-import types.Validated
-import types.Validated.given
+import types.validation.Validated
+import types.validation.Validated.given
 
 opaque type Database = String
 object Database

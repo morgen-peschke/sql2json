@@ -1,9 +1,10 @@
 package sql2json
 package types
+package validation
 
 import Validated.given
 import FailFastValidated.given
-import cat.{Eq,Show,Functor}
+import cat.{Eq,Show,Functor, ApplicativeError}
 import cat.Applicative.{~, given}
 import cat.ApplicativeError.given
 import cat.Functor.given
@@ -57,36 +58,6 @@ final class ValidatedTest
       Some("hi there").asValidated("Missing").toEither,
       Right("hi there")
     )
-    
-  @Test def testCatchOnlyReturningValue(): Unit = 
-    assertEquals(
-      Validated.catchOnly[IllegalArgumentException] {
-        "returned from body"
-      }.toEither,
-      Right("returned from body")
-    )
-
-  @Test def testCatchOnlyThrowsExpectedException(): Unit = 
-    assertEquals(
-      Validated.catchOnly[IllegalArgumentException] {
-        throw new IllegalArgumentException("Oops!")
-      }.toEither,
-      Left(NonEmptyList.one("java.lang.IllegalArgumentException: Oops!"))
-    )
-
-  @Test def testCatchOnlyThrowsUnexpectedException(): Unit = 
-    try
-      val result = Validated.catchOnly[IllegalArgumentException] {
-        throw new IllegalStateException("Oops!")
-      }
-      fail(s"Should have thrown exception, instead returned $result")
-    catch {
-      case e: Throwable => 
-        assertEquals(
-          e.toString,
-          "java.lang.IllegalStateException: Oops!"
-        )
-    }
 
 object ValidatedTest
   given [A](given Arbitrary[A]): Arbitrary[Validated[A]] =

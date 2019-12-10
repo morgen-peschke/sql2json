@@ -1,18 +1,18 @@
 package sql2json
 package types
+package validation
 
-import scala.reflect.ClassTag
-import cat.{Show, Functor, Eq, Applicative, ApplicativeError, Semigroup, Monad, MonadError}
-import cat.Show.given
-import cat.Eq.given
+import cat.{Show, Functor, Applicative, ApplicativeError, Semigroup}
+import cat.Show.show
+import cat.Eq, Eq.given
 import cat.Semigroup.given
 import cat.SemigroupK.given
-
-type Errors = NonEmptyList[String]
 
 /**
  * An attempt to see if `Validated` from [Cats](https://typelevel.org/cats/) could be implemented as a
  * zero-cost wrapper over [[Either]]
+ *
+ * Note: this is _not_ a [[Monad]] as it accumulates,rather than sequences, effects (in this case, errors)
  */
 opaque type Validated[A] = Either[Errors, A]
 object Validated
@@ -25,13 +25,6 @@ object Validated
     def (aEither: Either[Errors, A]) asValidated: Validated[A] = aEither
 
   given[A]: ValidatedLifts[A]
-
-  def catchOnly[T <: Throwable]: CatchOnlyPartiallyApplied[T] = new CatchOnlyPartiallyApplied[T]
-  final class CatchOnlyPartiallyApplied[T <: Throwable](val ignored: Boolean = true) extends AnyVal
-    def apply[A] (body: => A)(given ct: ClassTag[T]): Validated[A] =
-      try body.valid
-      catch 
-        case ct(ex) => ex.toString.invalid
 
   object Valid 
     def unapply[A](va: Validated[A]): Option[A] = 
@@ -85,53 +78,5 @@ object Validated
 
     override def toEither[A](ca: Validated[A]): Either[Errors, A] = ca
 
-/**
- * An attempt to stay zero-cost, and introduce a way to tell at the type level if the 
- * underlying [[Either]] is fail-fast or accumulating.
- */
-opaque type FailFastValidated[A] = Validated[A]
-object FailFastValidated
-  
-  trait FailFastOps[A]
-    def (ffva: FailFastValidated[A]) accumulate: Validated[A] = ffva
-    def (va: Validated[A]) failFast: FailFastValidated[A] = va
+    override def fromEither[A](either: Either[Errors, A]): Validated[A] = either
 
-  given[A]: FailFastOps[A]
-
-  given[A](given Show[A]): Show[FailFastValidated[A]] =
-    _ match
-       case Right(a) => show"FailFastValid($a)"
-       case Left(e) => show"FailFastInvalid($e)"
-
-  given[A: Eq]: Eq[FailFastValidated[A]] = 
-     (_, _) match
-       case (Right(a), Right(b)) => a === b
-       case (Left(ae), Left(be)) => ae === be
-       case _ => false
-
-  given Functor[FailFastValidated]
-    def map[A,B] (fa: FailFastValidated[A], f: A => B): FailFastValidated[B] = fa.map(f)
-
-  given Applicative[FailFastValidated]
-    def pure[A](a: A): FailFastValidated[A] = Right(a)
-
-    def ap[A, B] (ff: FailFastValidated[A => B], fa: FailFastValidated[A]): FailFastValidated[B] =
-      (ff, fa) match
-        case (Right(f), Right(a)) => Right(f(a))
-        case (Right(_), Left(es)) => Left(es)
-        case (Left(es), _       ) => Left(es)
-
-  given Monad[FailFastValidated]
-    def flatMap[A,B] (ca: FailFastValidated[A], fc: A => FailFastValidated[B]): FailFastValidated[B] = 
-      ca match 
-        case Right(v) => fc(v)
-        case Left(v) => Left(v)
-
-  given ApplicativeError[FailFastValidated, Errors]          
-    def raise[A](error: Errors): FailFastValidated[A] = Left(error)
-
-    def recover[A](ca: FailFastValidated[A], f: Errors => A): FailFastValidated[A] = Right(ca.fold(f, identity))
-
-    def fold[A, B] (ca: FailFastValidated[A], fe: Errors => B, fa: A => B): B = ca.fold(fe, fa)
-
-  given MonadError[FailFastValidated, Errors] = MonadError.derived[FailFastValidated, Errors]

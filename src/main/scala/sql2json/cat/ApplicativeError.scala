@@ -2,6 +2,12 @@ package sql2json
 package cat
 
 import Applicative.given
+import types.Convertible
+import Applicative.given
+import types.Convertible
+import Convertible.given
+import scala.quoted.{Type, Expr, QuoteContext}
+import scala.reflect.ClassTag
 
 trait ApplicativeError[C[_], E](given val applicative: Applicative[C])
   def raise[A](error: E): C[A]
@@ -15,20 +21,29 @@ trait ApplicativeError[C[_], E](given val applicative: Applicative[C])
 
   def toEither[A](ca: C[A]): Either[E, A] = fold(ca, Left(_), Right(_))
   
+  def fromEither[A](either: Either[E,A]): C[A] = 
+    either match
+      case Left(e) => raise[A](e)
+      case Right(a) => a.pure[C]
+
+  def catchOnly[T <: Throwable]: ApplicativeError.CatchOnlyPartiallyApplied[C,E,T] = 
+    new ApplicativeError.CatchOnlyPartiallyApplied[C,E,T](given this)
+
 trait MonadErrorProvidesApplicativeError
   given [F[_], E] (given ME: MonadError[F, E]): ApplicativeError[F, E] = ME.applicativeError
 
 object ApplicativeError extends MonadErrorProvidesApplicativeError
-  def fromEither[F[_]]: FromEitherPartiallyApplied[F] = new FromEitherPartiallyApplied[F]
-
-  class FromEitherPartiallyApplied[F[_]](val ignored: Boolean = true) extends AnyVal
-    def apply[A, E](either: Either[E, A])(given AE: ApplicativeError[F, E]): F[A] = 
-      either match
-        case Left(e) => e.raise[F, A]
-        case Right(a) => a.pure[F]
+  final class CatchOnlyPartiallyApplied[C[_], E, T <: Throwable](given AE: ApplicativeError[C,E]) extends AnyVal
+    def apply[A] (body: => A)(given CTE: Convertible[T,E], CT: ClassTag[T]): C[A] = 
+        try AE.applicative.pure(body)
+        catch 
+        case CT(ex) => AE.raise(CTE.cast(ex))
 
   trait ApplicativeErrorLifts[E]
     def[C[_], A] (error: E) raise (given AE: ApplicativeError[C,E]): C[A] = AE.raise[A](error)
+  
+  trait ApplicativeErrorEitherLifts[E,A]
+    def[C[_]] (either: Either[E,A]) liftToError (given AE: ApplicativeError[C, E]): C[A] = AE.fromEither(either)
 
   trait ApplicativeErrorOps[C[_],A]
     def[E] (ca: C[A]) recover (f: E => A)(given AE: ApplicativeError[C,E]): C[A] = AE.recover(ca, f)
@@ -40,4 +55,5 @@ object ApplicativeError extends MonadErrorProvidesApplicativeError
     def[E] (cae: C[A]) toEither (given AE: ApplicativeError[C,E]): Either[E, A] = AE.toEither(cae)
 
   given[E]: ApplicativeErrorLifts[E]
+  given[E,A]: ApplicativeErrorEitherLifts[E,A]
   given[C[_],A]: ApplicativeErrorOps[C,A]

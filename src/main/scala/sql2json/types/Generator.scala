@@ -13,6 +13,7 @@ import Done.given
 import Generator.{Action, given}
 import Generator.Action.{halt, given}
 import Generator.Result.given
+import validation.{Validated,Errors}
 
 import scala.reflect.ClassTag
 import scala.annotation.tailrec

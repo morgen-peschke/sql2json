@@ -10,10 +10,11 @@ import cat.Monad.given
 import cat.Applicative.given
 import cat.ApplicativeError.given
 import cat.SemigroupK.given
-import types.{Validated, FailFastValidated, NonEmptyList}
-import types.Validated.given
-import types.FailFastValidated.given
-import types.Errors
+import types.validation.{Validated, FailFastValidated, Errors}
+import Validated.given
+import FailFastValidated.given
+import Errors.given
+import types.NonEmptyList
 import config.Config
 import jdbc.{Database, Sql, OutputType}
 import config.DBConfig

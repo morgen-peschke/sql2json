@@ -2,9 +2,10 @@ package sql2json
 package config
 
 import com.typesafe.config.{ConfigFactory, ConfigValue, Config => JConfig}
-import types.{Validated, Generator}
-import types.Validated.given
-import types.FailFastValidated.given
+import types.validation.{Validated, FailFastValidated}
+import types.validation.Validated.given
+import types.validation.FailFastValidated.given
+import types.Generator
 import jdbc.{JdbcUrl, Database, Driver, Username, Password}
 import cat.Show
 import Show.show
@@ -38,7 +39,7 @@ object DBConfig
       catch
         case ex: Exception => s"Bad config at $path.password: ${ex.getMessage}".invalid
     val validatedDriver: Validated[Driver] = 
-      try Driver(conf.getString("db.driver")) 
+      try Driver(conf.getString("db.driver")).accumulate
       catch
         case ex: Exception => s"Bad config at $path.driver: ${ex.getMessage}".invalid[Driver]
     

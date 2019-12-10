@@ -11,18 +11,20 @@ import testing.Arbitrary
 import testing.Arbitrary.forAll
 import testing.Result.given
 import org.junit.Test
+import org.junit.Assert.fail
+import types.Convertible
 
 
 abstract class ApplicativeErrorLaws[F[_], E, A, B](given AE: ApplicativeErrorLaws.Givens[F, E, A, B])
   @Test def toAndFromEitherConsistency(): Unit = AE.run {
     forAll[Either[E,A]]("applicativeError toEither/fromEither consistency (fix this first)") { either =>
-      ApplicativeError.fromEither[F](either).toEither <-> either
+      either.liftToError[F].toEither <-> either
     }
   }
 
   @Test def raiseConsistencyWithFromEither(): Unit = AE.run {
     forAll[E]("raise consistency with fromEither on a Left") { e =>
-      e.raise[F,A] <-> ApplicativeError.fromEither[F](Left(e))
+      e.raise[F,A] <-> Left(e).liftToError[F]
     }
   }
 
@@ -60,6 +62,43 @@ abstract class ApplicativeErrorLaws[F[_], E, A, B](given AE: ApplicativeErrorLaw
     }
   }
 
+  @Test def testCatchOnlyReturningValue(): Unit = AE.run {
+    forAll[A]("catchOnly returning value consistent with pure") { value =>
+      given Convertible[IllegalArgumentException, E] = iae => 
+        fail(s"Should have returned value, instead caught $iae")
+        ???
+      summon[ApplicativeError[F, E]].catchOnly[IllegalArgumentException](value) <-> value.pure[F]
+    }
+  }
+
+  @Test def testCatchOnlyThrowsExpectedException(): Unit = AE.run {
+    forAll[String ~ (String => E)]("catchOnly handling exception consistent with raise") { 
+      case exceptionMsg ~ msgToErrorFn =>
+        given Convertible[IllegalArgumentException, E] = iae => msgToErrorFn(iae.getMessage)
+        summon[ApplicativeError[F, E]].catchOnly[IllegalArgumentException] {
+          throw new IllegalArgumentException(exceptionMsg)
+        } <-> msgToErrorFn(exceptionMsg).raise[F, A]
+    }
+  }
+   
+  @Test def testCatchOnlyThrowsUnexpectedException(): Unit = AE.run {
+    forAll[String]("catchOnly propagates exceptions of unexpected types") { exceptionMsg =>
+        given Convertible[ClassCastException, E] = 
+          iae => 
+            fail(s"Should have propagated exception, but caught $iae instead")
+            ???
+        try
+          val result = summon[ApplicativeError[F, E]].catchOnly[ClassCastException] {
+            throw new IllegalArgumentException(exceptionMsg)
+          }
+          fail(s"Should have thrown exception, instead returned $result")
+          ???
+        catch
+          case e: IllegalArgumentException => 
+            e.getMessage <-> exceptionMsg
+    }
+  }
+
 object ApplicativeErrorLaws
   class Givens[F[_], E, A, B](
     given
@@ -70,11 +109,15 @@ object ApplicativeErrorLaws
       Show[F[A]],
       Eq[B],
       Show[B],
+      Eq[String],
+      Show[String],
       Arbitrary[F[A]],
       Arbitrary[A],
       Arbitrary[E],
       Arbitrary[A => B],
       Arbitrary[E => A],
+      Arbitrary[String],
+      Arbitrary[String => E],
       Arbitrary[E => E],
       Arbitrary[E => B],
       Arbitrary[Either[E, A]]
@@ -87,11 +130,15 @@ object ApplicativeErrorLaws
       Show[F[A]],
       Eq[B],
       Show[B],
+      Eq[String],
+      Show[String],
       Arbitrary[F[A]],
       Arbitrary[A],
       Arbitrary[E],
       Arbitrary[A => B],
       Arbitrary[E => A],
+      Arbitrary[String],
+      Arbitrary[String => E],
       Arbitrary[E => E],
       Arbitrary[E => B],
       Arbitrary[Either[E, A]]
@@ -106,11 +153,15 @@ object ApplicativeErrorLaws
       Show[F[A]],
       Eq[B],
       Show[B],
+      Eq[String],
+      Show[String],
       Arbitrary[F[A]],
       Arbitrary[A],
       Arbitrary[E],
       Arbitrary[A => B],
       Arbitrary[E => A],
+      Arbitrary[String],
+      Arbitrary[String => E],
       Arbitrary[E => E],
       Arbitrary[E => B],
       Arbitrary[Either[E, A]]

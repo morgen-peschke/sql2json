@@ -6,8 +6,8 @@ import cat.ApplicativeError.given
 import cat.Show
 import Show.show
 import cli.Arguments
-import types.Validated.{Invalid, given}
-import types.FailFastValidated.given
+import types.validation.Validated.{Invalid, given}
+import types.validation.FailFastValidated.given
 import types.Done.given
 import types.Generator.Action.given
 import jdbc.{OutputType, Sql}

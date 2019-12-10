@@ -1,10 +1,12 @@
 package sql2json
 package jdbc
 
-import cat.Show
+import cat.{Show, ApplicativeError}
 import cat.SemigroupK.given
-import types.{Validated,Done,Generator}
 import Show.show
+import types.validation.{Validated, Errors}
+import Errors.given
+import types.{Generator, Done}
 import Generator.Action.{halt,given}
 import Done.given
 import types.json.Json
@@ -117,8 +119,8 @@ object Sql
       _.close().done
     )
 
-  def execute(statement: Statement, sql: String): Validated[Done] = 
-    Validated.catchOnly[SQLException](statement.execute(sql).done)
+  def execute[C[_]](statement: Statement, sql: String)(given AE: ApplicativeError[C, Errors]): C[Done] = 
+    AE.catchOnly[SQLException](statement.execute(sql).done)
 
   def query(statement: Statement, sql: String): Generator[ResultSet] = 
     Generator.ofResource(
