@@ -9,7 +9,7 @@ import scala.reflect.ClassTag
 import cat.Eq
 import cat.Eq.given
 import cat.Show
-import cat.Show.given
+import cat.Show.show
 
 /**
  * An attempt to abstract away some of the JUnit boilerplate.

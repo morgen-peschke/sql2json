@@ -3,7 +3,7 @@ package cat
 
 import org.junit.Test
 import org.junit.Assert._
-import cat.Show.given
+import cat.Show.show
 
 final class ShowIterpolatorTest {
   @Test def interpolatorShouldCompile(): Unit = 

@@ -13,7 +13,7 @@ import cat.Functor.given
 import cat.Monad.given
 import cat.MonadError.given
 import cat.Eq.given
-import cat.Show.given
+import cat.Show.show
 import org.junit.Test
 import org.junit.Assert._
 import testing.laws.{ApplicativeLaws, EqLaws, FunctorLaws, MonadLaws, SemigroupLaws}
