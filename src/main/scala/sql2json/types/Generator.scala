@@ -1,19 +1,19 @@
 package sql2json
 package types
 
-import cat.{Applicative, Eq, Functor, Semigroup, SemigroupK, Monad, Monoid, MonoidK, Show}
-import cat.Applicative.given
-import cat.ApplicativeError.given
-import cat.Functor.given
-import cat.Semigroup.given
-import cat.SemigroupK.given
-import cat.Show.show
-import cat.Eq.given
+import cat.{Monad, Monoid, MonoidK}
+import cat.Applicative, Applicative.given
+import cat.ApplicativeError, ApplicativeError.given
+import cat.Functor, Functor.given
+import cat.Semigroup, Semigroup.given
+import cat.SemigroupK, SemigroupK.given
+import cat.Show, Show.show
+import cat.Eq, Eq.given
 import Done.given
 import Generator.{Action, given}
 import Generator.Action.{halt, given}
 import Generator.Result.given
-import validation.{Validated,Errors}
+import validation.Errors, Errors.given
 
 import scala.reflect.ClassTag
 import scala.annotation.tailrec
@@ -63,10 +63,6 @@ object Generator
   given Show[Generator[?]] = _.name
 
   sealed abstract class Result[A]
-    def asValidated: Validated[A] = this match
-      case Result.Success(a) => a.pure[Validated]
-      case Result.Failure(generator, errors) => errors.map(e => s"$generator: $e").raise[Validated, A]
-
     def asAction: Action[A] = this match
       case Result.Success(a) => Action.Continue(a)
       case f @ Result.Failure(_, _) => Action.Fail(f)
@@ -97,6 +93,16 @@ object Generator
         fa match 
           case Success(a) => Success(f(a))
           case failure @ Failure(_, _) => failure.as[B]
+
+    given[C[_], A](given ApplicativeError[C, Errors]): types.Convertible[Result[A], C[A]] = 
+      _ match
+        case Result.Success(a) => a.pure[C]
+        case Result.Failure(generator, errors) => errors.map(e => s"$generator: $e").raise[C, A]
+
+    given[C[_]](given ApplicativeError[C, Errors]): types.ConvertibleK[Result, C]
+      def castK[A](ra: Result[A]): C[A] = ra match
+        case Result.Success(a) => a.pure[C]
+        case Result.Failure(generator, errors) => errors.map(e => s"$generator: $e").raise[C, A]
 
   sealed abstract class Action[A]
     def asResult(fallback: A): Result[A] = this match

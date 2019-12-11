@@ -1,14 +1,12 @@
 package sql2json
 package jdbc
 
-import cat.{Show, ApplicativeError}
+import cat.ApplicativeError
 import cat.SemigroupK.given
-import Show.show
-import types.validation.{Validated, Errors}
-import Errors.given
-import types.{Generator, Done}
-import Generator.Action.{halt,given}
-import Done.given
+import cat.Show, Show.show
+import types.validation.Errors, Errors.given
+import types.Generator, Generator.Action.{halt,given}
+import types.Done, Done.given
 import types.json.Json
 import Username.username
 import Password.password

@@ -30,10 +30,10 @@ object Applicative extends ApplicativeErrorProvidesApplicative
   object ~
     def unapply[A,B](ab: (A,B)): (A,B) = ab
 
-  trait ApplicativeLifts[A]
+  given lifts[A]: AnyRef 
     def[C[_]](a: A) pure (given C: Applicative[C]): C[A] = C.pure(a)
-
-  trait ApplicativeOps[C[_], A]
+  
+  given ops[C[_], A]: AnyRef
     def[B](cf: C[A => B]) ap (ca: C[A])(given AP: Applicative[C]): C[B] = AP.ap(cf, ca)
    
     def[B](cf: C[A => B]) <*> (ca: C[A])(given AP: Applicative[C]): C[B] = AP.ap(cf, ca)
@@ -44,10 +44,6 @@ object Applicative extends ApplicativeErrorProvidesApplicative
 
     def[B](ca: C[A]) <* (cb: C[B])(given AP: Applicative[C]): C[A] = AP.productL(ca, cb)
 
-  given[A]: ApplicativeLifts[A]
-  given[C[_],A]: ApplicativeOps[C, A]
-
   given Applicative[List]
     def pure[A](a: A): List[A] = a :: Nil
-
     def ap[A, B](cf: List[A => B], ca: List[A]): List[B] = cf.flatMap(ca.map(_))

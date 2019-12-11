@@ -1,18 +1,22 @@
 package sql2json
 package jdbc
 
-import types.validation.Validated
-import types.validation.Validated.given
 import cat.Show
+import cat.Applicative.given
+import cat.MonadError, MonadError.given
+import cat.ApplicativeError, ApplicativeError.given
+import types.Convertible.given 
+import types.validation.Errors, Errors.given
+import types.validation.FailFast, FailFast.Validated.given
 
 import java.util.Properties
 
 opaque type Password = String
 object Password 
-  def apply(raw: String): Validated[Password] =
-    raw.trim match 
-      case "" => "Password cannot be empty".invalid
-      case trimmed => trimmed.valid
+  def apply[C[_]](raw: String)(given ApplicativeError[C, Errors]): C[Password] =
+    raw.trim.pure[FailFast.Validated]
+      .ensure("Password cannot be empty".as[Errors])(_.nonEmpty)
+      .as[C[Password]]
 
   given Show[Password] = _ => "********"
 

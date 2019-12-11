@@ -12,6 +12,9 @@ trait MonadError[C[_], E](given val monad: Monad[C], val applicativeError: Appli
   def ensureOr[A](fa: C[A], error: A => E, predicate: A => Boolean): C[A] =
     fa.flatMap(a => if (predicate(a)) a.pure[C] else error(a).raise)
 
+  def prevent[A](fa: C[A], error: => E, predicate: A => Boolean): C[A] = ensure(fa, error, a => !predicate(a))
+  def preventOr[A](fa: C[A], error: A => E, predicate: A => Boolean): C[A] = ensureOr(fa, error, a => !predicate(a))
+
   def catchOnly[T <: Throwable]: ApplicativeError.CatchOnlyPartiallyApplied[C,E,T] = applicativeError.catchOnly[T]
 
 object MonadError
@@ -25,5 +28,11 @@ object MonadError
 
     def[E] (fa: C[A]) ensureOr(error: A => E)(predicate: A => Boolean)(given ME: MonadError[C,E]): C[A] =
       ME.ensureOr(fa, error, predicate)
+
+    def[E] (fa: C[A]) prevent (error: => E)(predicate: A => Boolean)(given ME: MonadError[C,E]): C[A] =
+      ME.prevent(fa, error, predicate)
+
+    def[E] (fa: C[A]) preventOr(error: A => E)(predicate: A => Boolean)(given ME: MonadError[C,E]): C[A] =
+      ME.preventOr(fa, error, predicate)
 
   given[C[_],A]: MonadErrorOps[C,A]

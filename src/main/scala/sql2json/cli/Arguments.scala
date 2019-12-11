@@ -3,17 +3,16 @@ package cli
 
 import java.nio.file.{Path,Paths}
 
-import cat.Show
-import cat.Show.show
+import cat.Show, Show.show
 import cat.Functor.given
 import cat.Monad.given
 import cat.Applicative.given
-import cat.ApplicativeError.given
+import cat.ApplicativeError, ApplicativeError.given
 import cat.SemigroupK.given
-import types.validation.{Validated, FailFastValidated, Errors}
-import Validated.given
-import FailFastValidated.given
-import Errors.given
+import types.Convertible.given
+import types.validation.Accumulate, Accumulate.given
+import types.validation.FailFast, FailFast.given
+import types.validation.Errors, Errors.given 
 import types.NonEmptyList
 import config.Config
 import jdbc.{Database, Sql, OutputType}
@@ -61,28 +60,28 @@ object Arguments
                           dbNameOpt: Option[Database] = None,
                           formatAsObject: Boolean = false, 
                           omitHeader: Boolean = true, 
-                          verbose: Boolean = false): FailFastValidated[Either[ShowHelpText.type,Arguments]] =
+                          verbose: Boolean = false): FailFast.Validated[Either[ShowHelpText.type,Arguments]] =
     rest match 
-      case "--help" :: _ => Left(ShowHelpText).valid.failFast
+      case "--help" :: _ => Left(ShowHelpText).validFF
       case ("-h" | "--header") :: remaining => processArgs(config, remaining, dbNameOpt, formatAsObject, false, verbose)
       case ("-v" | "--verbose") :: remaining => processArgs(config, remaining, dbNameOpt, formatAsObject, omitHeader, true)
 
       case arg @ ("-f" | "--format") :: paramAndRemaining => paramAndRemaining match
-        case Nil => s"Missing <fmt> after $arg".invalid.failFast
+        case Nil => s"Missing <fmt> after $arg".invalidFF
         case ArrayFmt :: remaining => processArgs(config, remaining, dbNameOpt, false, omitHeader, verbose)
         case ObjectFmt :: remaining => processArgs(config, remaining, dbNameOpt, true, omitHeader, verbose)
-        case junk :: _ => s"Unrecognized <fmt> after $arg (expected '$ObjectFmt' or '$ArrayFmt'): $junk".invalid.failFast
+        case junk :: _ => s"Unrecognized <fmt> after $arg (expected '$ObjectFmt' or '$ArrayFmt'): $junk".invalidFF[Either[ShowHelpText.type,Arguments]]
 
       case arg @ ("-d" | "--database") :: paramAndRemaining => paramAndRemaining match
-        case Nil => s"Missing <name> after $arg".invalid.failFast
+        case Nil => s"Missing <name> after $arg".invalidFF
         case rawName :: remaining => 
-          Database(rawName).toEither match
+          Database[FailFast.Validated](rawName).toEither match
           case Right(dbName) => processArgs(config, remaining, Some(dbName), formatAsObject, omitHeader, verbose)
-          case Left(errors) => errors.map(e => s"Invalid <name> after $arg: $e").raise[Validated,Either[ShowHelpText.type,Arguments]].failFast
+          case Left(errors) => errors.map(e => s"Invalid <name> after $arg: $e").invalidFF[Either[ShowHelpText.type,Arguments]]
 
       case Nil =>
         dbNameOpt
-          .fold(config.default)(config.forDatabase)
+          .fold(config.default[FailFast.Validated])(config.forDatabase[FailFast.Validated])
           .map { dbConfig => 
             Right(Arguments(
               dbConfig,
@@ -91,19 +90,19 @@ object Arguments
               else OutputType.ArrayWithHeader(verbose)
             ))
           }
-          .failFast
 
-      case junk => show"Unrecognized argument, starting at: $junk".invalid.failFast
+      case junk => show"Unrecognized argument, starting at: $junk".invalidFF
 
 
-  def parse(args: Seq[String]): Validated[Arguments] =
+  def parse[C[_]](args: Seq[String])(given ApplicativeError[C, Errors]): C[Arguments] =
     val results = args.toList match
-      case Nil => "No arguments".invalid.failFast
-      case rest => Config.load.failFast.flatMap(processArgs(_, rest))
+      case Nil => "No arguments".as[Errors].raise[FailFast.Validated, Either[ShowHelpText.type,Arguments]]
+      case rest => Config.load[C].as[FailFast.Validated[Config]].flatMap(processArgs(_, rest))
 
     results
       .mapError[Errors](_ combineK HelpText.pure[NonEmptyList])
       .flatMap {
-        case Left(ShowHelpText) => HelpText.invalid.failFast
-        case Right(args) => args.valid.failFast
-      }.accumulate
+        case Left(ShowHelpText) => HelpText.as[Errors].raise[FailFast.Validated, Arguments]
+        case Right(args) => args.pure[FailFast.Validated]
+      }
+      .as[C[Arguments]]

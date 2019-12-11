@@ -54,6 +54,9 @@ object ApplicativeError extends MonadErrorProvidesApplicativeError
 
     def[E] (cae: C[A]) toEither (given AE: ApplicativeError[C,E]): Either[E, A] = AE.toEither(cae)
 
+  given[C0[_], C1[_], E](given AE1: ApplicativeError[C0, E], AE2: ApplicativeError[C1, E]): types.ConvertibleK[C0, C1]
+    def castK[A](a: C0[A]): C1[A] = a.toEither.liftToError[C1]
+
   given[E]: ApplicativeErrorLifts[E]
   given[E,A]: ApplicativeErrorEitherLifts[E,A]
   given[C[_],A]: ApplicativeErrorOps[C,A]

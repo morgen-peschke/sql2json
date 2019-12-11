@@ -2,8 +2,8 @@ package sql2json
 package types
 package validation
 
-import Validated.given
-import FailFastValidated.given
+import Accumulate.given
+import FailFast.given
 import cat.{Eq,Show,Functor, ApplicativeError}
 import cat.Applicative.{~, given}
 import cat.ApplicativeError.given
@@ -16,27 +16,30 @@ import testing.laws.{ApplicativeLaws, ApplicativeErrorLaws, EqLaws, FunctorLaws,
 import testing.{Arbitrary, Gen, Cogen}
 import testing.Arbitrary.forAll
 import testing.Result.given
+import types.ConvertibleK.given
 
 import ValidatedTest.given
 
-final class ValidatedEqLaws extends EqLaws[Validated[Boolean]]
-final class FailFastValidatedEqLaws extends EqLaws[FailFastValidated[Boolean]]
+final class AccumulateEqLaws extends EqLaws[Accumulate.Validated[Boolean]]
+final class FailFastEqLaws extends EqLaws[FailFast.Validated[Boolean]]
 
-final class ValidatedFunctorLaws extends FunctorLaws[Validated, Int, String, Long]
-final class FailFastValidatedFunctorLaws extends FunctorLaws[FailFastValidated, Int, String, Long]
+final class AccumulateFunctorLaws extends FunctorLaws[Accumulate.Validated, Int, String, Long]
+final class FailFastFunctorLaws extends FunctorLaws[FailFast.Validated, Int, String, Long]
 
-final class ValidatedApplicativeLaws extends ApplicativeLaws[Validated, Int, String, Long]
-final class FailFastValidatedApplicativeLaws extends ApplicativeLaws[FailFastValidated, Int, String, Long]
+final class AccumulateApplicativeLaws extends ApplicativeLaws[Accumulate.Validated, Int, String, Long]
+final class FailFastApplicativeLaws extends ApplicativeLaws[FailFast.Validated, Int, String, Long]
 
-final class ValidatedApplicativeErrorLaws extends ApplicativeErrorLaws[Validated, Errors, Int, String]
-final class FailFastValidatedApplicativeErrorLaws extends ApplicativeErrorLaws[FailFastValidated, Errors, Int, String]
+final class AccumulateApplicativeErrorLaws extends ApplicativeErrorLaws[Accumulate.Validated, Errors, Int, String]
+final class FailFastApplicativeErrorLaws extends ApplicativeErrorLaws[FailFast.Validated, Errors, Int, String]
 
-final class FailFastValidatedMonadLaws extends MonadLaws[FailFastValidated, Int, String]
-final class FailFastValidatedMonadErrorLaws extends MonadErrorLaws[FailFastValidated, Errors, Int, String]
+final class FailFastMonadLaws extends MonadLaws[FailFast.Validated, Int, String]
+final class FailFastMonadErrorLaws extends MonadErrorLaws[FailFast.Validated, Errors, Int, String]
 
-final class ValidatedSemigroupLaws extends SemigroupLaws[Validated[Int]]
+final class AccumulateSemigroupLaws extends SemigroupLaws[Accumulate.Validated[Int]]
+final class FailFastSemigroupLaws extends SemigroupLaws[FailFast.Validated[Int]]
 
-final class ValidatedTest 
+final class AccumulateTest 
+  import Accumulate.Validated
   @Test def validConsistentWithPure(): Unit = 
     forAll[Int]("valid consistency with pure") { value =>
       value.valid <-> value.pure[Validated]
@@ -60,21 +63,21 @@ final class ValidatedTest
     )
 
 object ValidatedTest
-  given [A](given Arbitrary[A]): Arbitrary[Validated[A]] =
+  given arbAccum[A](given Arbitrary[A]): Arbitrary[Accumulate.Validated[A]] =
     Arbitrary.oneOf(
       Arbitrary[A].map(_.valid),
       Arbitrary[String].map(_.invalid[A])
     )    
 
-  given [A](given A: Arbitrary[Validated[A]]): Arbitrary[FailFastValidated[A]] =
-    A.map(_.failFast)
+  given arbFFast[A](given A: Arbitrary[Accumulate.Validated[A]]): Arbitrary[FailFast.Validated[A]] =
+    A.map(_.asKind[FailFast.Validated])
 
-  given [A](given GA: Gen[A], GS: Gen[String]): Gen[FailFastValidated[A]] = Gen.usingRandom { rng => 
-    if (rng.nextBoolean) rng.nextString(rng.nextInt(20)).invalid[A].failFast
-    else GA.fromSeed(rng.nextLong).valid.failFast
+  given [A](given GA: Gen[A], GS: Gen[String]): Gen[FailFast.Validated[A]] = Gen.usingRandom { rng => 
+    if (rng.nextBoolean) rng.nextString(rng.nextInt(20)).invalid[A].asKind[FailFast.Validated]
+    else GA.fromSeed(rng.nextLong).valid.asKind[FailFast.Validated]
   }
 
-  given [A](given CA: Cogen[A], CE: Cogen[NonEmptyList[String]]): Cogen[FailFastValidated[A]] = 
+  given [A](given CA: Cogen[A], CE: Cogen[NonEmptyList[String]]): Cogen[FailFast.Validated[A]] = 
     _.toEither match 
       case Left(nel) => 2L + CE.toSeed(nel)
       case Right(a)  => 1L + CA.toSeed(a)
