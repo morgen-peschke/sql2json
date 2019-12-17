@@ -8,10 +8,8 @@ trait ApplicativeIsFunctor
   given [C[_]](given A: Applicative[C]): Functor[C] = A.functor
 
 object Functor extends ApplicativeIsFunctor 
-  trait FunctorOps[C[_],A]
+  given ops[C[_],A]: AnyRef
     def [B] (fa: C[A]) map (f: A => B)(given F: Functor[C]): C[B] = F.map(fa, f)
-
-  given [C[_],A]: FunctorOps[C,A]
 
   given Functor[List]
     def map [A,B] (fa: List[A], f: A => B): List[B] = fa.map(f)

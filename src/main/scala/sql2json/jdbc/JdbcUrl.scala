@@ -22,5 +22,6 @@ object JdbcUrl
   
   given Show[JdbcUrl] = identity(_)
 
-  def (driver: Driver) connect (url: JdbcUrl)(props: Properties): Connection =
-    driver.connect(url, props)
+  given ops: AnyRef 
+    def (driver: Driver) connect (url: JdbcUrl)(props: Properties): Connection =
+      driver.connect(url, props)

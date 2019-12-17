@@ -39,13 +39,13 @@ object ApplicativeError extends MonadErrorProvidesApplicativeError
         catch 
         case CT(ex) => AE.raise(CTE.cast(ex))
 
-  trait ApplicativeErrorLifts[E]
+  given lifts[E]: AnyRef
     def[C[_], A] (error: E) raise (given AE: ApplicativeError[C,E]): C[A] = AE.raise[A](error)
   
-  trait ApplicativeErrorEitherLifts[E,A]
+  given eitherLifts[E,A]: AnyRef
     def[C[_]] (either: Either[E,A]) liftToError (given AE: ApplicativeError[C, E]): C[A] = AE.fromEither(either)
 
-  trait ApplicativeErrorOps[C[_],A]
+  given ops[C[_],A]: AnyRef
     def[E] (ca: C[A]) recover (f: E => A)(given AE: ApplicativeError[C,E]): C[A] = AE.recover(ca, f)
 
     def[B, E] (ca: C[A]) fold(fe: E => B, fa: A => B)(given AE: ApplicativeError[C,E]): B = AE.fold(ca, fe, fa)
@@ -56,7 +56,3 @@ object ApplicativeError extends MonadErrorProvidesApplicativeError
 
   given[C0[_], C1[_], E](given AE1: ApplicativeError[C0, E], AE2: ApplicativeError[C1, E]): types.ConvertibleK[C0, C1]
     def castK[A](a: C0[A]): C1[A] = a.toEither.liftToError[C1]
-
-  given[E]: ApplicativeErrorLifts[E]
-  given[E,A]: ApplicativeErrorEitherLifts[E,A]
-  given[C[_],A]: ApplicativeErrorOps[C,A]

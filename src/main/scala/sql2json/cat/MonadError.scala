@@ -22,7 +22,7 @@ object MonadError
 
   def derived[C[_], E](given Monad[C], ApplicativeError[C,E]): MonadError[C, E] = new DerivedMonadError[C,E]
 
-  trait MonadErrorOps[C[_],A]
+  given ops[C[_],A]: AnyRef
     def[E] (fa: C[A]) ensure (error: => E)(predicate: A => Boolean)(given ME: MonadError[C,E]): C[A] =
       ME.ensure(fa, error, predicate)
 
@@ -34,5 +34,3 @@ object MonadError
 
     def[E] (fa: C[A]) preventOr(error: A => E)(predicate: A => Boolean)(given ME: MonadError[C,E]): C[A] =
       ME.preventOr(fa, error, predicate)
-
-  given[C[_],A]: MonadErrorOps[C,A]

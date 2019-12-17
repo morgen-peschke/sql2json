@@ -12,8 +12,7 @@ import types.Done, Done.given
 import types.Generator
 import types.Generator.Result.given
 import types.Generator.Action.given
-import jdbc.{OutputType, Sql}
-import jdbc.Sql.executeAll
+import jdbc.Sql, Sql.executeAll
 import java.io.{BufferedReader, InputStreamReader}
 import java.util.stream.Collector
 
@@ -32,7 +31,7 @@ object Main
           val sqlReader = new BufferedReader(new InputStreamReader(System.in))
           try 
             sqlReader.lines.collect(Sql.collector)
-              .executeAll(config.dbConfig, config.format)
+              .executeAll()(given config.dbConfig, config.format)
               .foreach { result =>
                 println(result.show).done.continue
               }

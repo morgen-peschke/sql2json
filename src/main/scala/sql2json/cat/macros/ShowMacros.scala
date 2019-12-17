@@ -9,6 +9,7 @@ trait ShowMacros
   inline def (sc: StringContext) show(args: =>Any*): String = ${ ShowMacros.showMacroImpl('sc, 'args) }
 
 object ShowMacros
+  inline def (sc: StringContext) show(args: =>Any*): String = ${ ShowMacros.showMacroImpl('sc, 'args) }
 
   def showMacroImpl(sc: Expr[StringContext], argsExpr: Expr[Seq[Any]])(given qctx: QuoteContext): Expr[String] =
     def fail[A](msg: String, expr: Expr[?]): Expr[A] =

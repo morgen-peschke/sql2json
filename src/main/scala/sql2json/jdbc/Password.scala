@@ -20,6 +20,7 @@ object Password
 
   given Show[Password] = _ => "********"
 
-  def (props: Properties) password (password: Password): Properties =
-    props.put("password", password)
-    props
+  given ops: AnyRef
+    def (props: Properties) password (password: Password): Properties =
+      props.put("password", password)
+      props

@@ -20,6 +20,7 @@ object Username
 
   given Show[Username] = identity(_)
 
-  def (props: Properties) username (username: Username): Properties =
-    props.put("user", username)
-    props
+  given ops: AnyRef
+    def (props: Properties) username (username: Username): Properties =
+      props.put("user", username)
+      props

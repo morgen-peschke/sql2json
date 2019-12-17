@@ -12,10 +12,8 @@ trait SemigroupKProviders
   given[C[_]] (given M: MonoidK[C]): SemigroupK[C] = M.semigroupK
 
 object SemigroupK extends SemigroupKProviders
-  trait SemigroupKOps[C[_],A]
+  given ops[C[_],A]: AnyRef
     def (a: C[A]) combineK (b: C[A])(given SK: SemigroupK[C]): C[A] = SK.combineK(a,b)
-
-  given[C[_],A]: SemigroupKOps[C,A]
 
   given SemigroupK[List]
     def combineK[A] (a: List[A], b: List[A]): List[A] = a ::: b

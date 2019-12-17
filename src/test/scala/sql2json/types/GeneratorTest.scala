@@ -144,7 +144,7 @@ final class SimpleGeneratorVariantTests
               .foldLeft(
                 count, 
                 (remaining, element) => {
-                  assertEquals(element, remaining)
+                  assertEquals(element.toLong, remaining.toLong)
                   if remaining == 0 then 0.stop
                   else (remaining - 1).continue
                 }
@@ -221,19 +221,19 @@ final class SimpleGeneratorVariantTests
     }
 
   @Test def takeWhileShouldBehaveLikeTakeWhileOnList(): Unit = 
-    given: Arbitrary[Int] = Arbitrary.between(0, 20)
+    given Arbitrary[Int] = Arbitrary.between(0, 20)
     forAll[Int]("Generator#takeWhile(...).toList equivalence with List.takeWhile") { length =>
       Generator.from[Int](0).takeWhile(_ < length).toList <-> (0 to length + 3).takeWhile(_ < length).toList.success
     }
 
   @Test def takeUntilShouldOmitTheSentinel(): Unit = 
-    given: Arbitrary[Int] = Arbitrary.between(0, 20)
+    given Arbitrary[Int] = Arbitrary.between(0, 20)
     forAll[Int]("Generator#takeUntil(...).toList equivalence with List.takeWhile") { length =>
       Generator.from[Int](0).takeUntil(length).toList <-> (0 to length + 3).takeWhile(_ != length).toList.success
     }
 
   @Test def dropUntilShouldOmitLeadingSentinelValues(): Unit = 
-    given: Arbitrary[Int] = Arbitrary.between(0, 20)
+    given Arbitrary[Int] = Arbitrary.between(0, 20)
     forAll[Int ~ NonEmptyList[Long]]("Generator#dropUntil(...).toList equivalence with List.dropWhile") { 
       case padding ~ nel => 
         // The inversion of nel.head is to ensure we don't run into a situation where the next element past the sentinels

@@ -7,12 +7,10 @@ trait Eq[A]
   def equiv(a: A, b: A): Boolean
   
 object Eq
-  trait EqOps[A]
+  given ops[A]: AnyRef
     def (a: A) === (b: A)(given E: Eq[A]): Boolean = E.equiv(a, b)
 
     def (a: A) =!= (b: A)(given E: Eq[A]): Boolean = !E.equiv(a, b)
-
-  given[A]: EqOps[A]
 
   given Eq[String]  = _ == _
   given Eq[Int]     = _ == _

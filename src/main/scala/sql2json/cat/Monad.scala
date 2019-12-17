@@ -8,12 +8,10 @@ trait MonadErrorProvidesMonad
   given[F[_]](given ME: MonadError[F, ?]): Monad[F] = ME.monad
 
 object Monad extends MonadErrorProvidesMonad
-  trait MonadOps[C[_],A]
+  given ops[C[_],A]: AnyRef
     def[B] (ca: C[A]) flatMap (fc: A => C[B])(given M: Monad[C]): C[B] = M.flatMap(ca, fc)
 
     def[B] (ca: C[A]) >=> (fc: A => C[B])(given M: Monad[C]): C[B] = M.flatMap(ca, fc)
-
-  given[C[_],A]: MonadOps[C,A]
 
   given Monad[List]
     def flatMap[A,B](ca: List[A], fc: A => List[B]): List[B] = ca.flatMap(fc)

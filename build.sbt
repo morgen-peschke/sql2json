@@ -1,4 +1,3 @@
-val dottyVersion = "0.20.0-RC1"
 enablePlugins(PackPlugin)
 
 lazy val root = project
@@ -6,7 +5,7 @@ lazy val root = project
   .settings(
     name := "dotty-simple",
     version := "0.1.0",
-    scalaVersion := dottyVersion,
+    scalaVersion := "0.21.0-bin-20191211-9bad8bc-NIGHTLY", //dottyLatestNightlyBuild.get,
     resolvers += "mvnrepository" at "http://mvnrepository.com/artifact/",
     libraryDependencies ++= Seq(
       "com.typesafe" % "config" % "1.4.0",

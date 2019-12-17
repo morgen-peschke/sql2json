@@ -15,7 +15,8 @@ import types.validation.FailFast, FailFast.given
 import types.validation.Errors, Errors.given 
 import types.NonEmptyList
 import config.Config
-import jdbc.{Database, Sql, OutputType}
+import jdbc.{Database, Sql}
+import jdbc.SqlResult.OutputType
 import config.DBConfig
 
 final case class Arguments(dbConfig: DBConfig, format: OutputType)

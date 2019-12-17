@@ -10,10 +10,8 @@ trait SemigroupProviders
   given[A] (given M: Monoid[A]): Semigroup[A] = M.semigroup
 
 object Semigroup extends SemigroupProviders
-  trait SemigroupOps[A]
+  given ops[A]: AnyRef
     def (a: A) combine (b: A)(given S: Semigroup[A]): A = S.combine(a,b)
-
-  given[A]: SemigroupOps[A]
 
   given forInt: Semigroup[Int] = _ + _
   given forLong: Semigroup[Long] = _ + _

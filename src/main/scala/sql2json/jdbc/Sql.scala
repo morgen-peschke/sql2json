@@ -7,13 +7,14 @@ import cat.Show, Show.show
 import types.validation.Errors, Errors.given
 import types.Generator, Generator.Action.{halt,given}
 import types.Done, Done.given
+import types.Convertible.given
 import types.json.Json
-import Username.username
-import Password.password
+import Username.given
+import Password.given
 import config.DBConfig
-import JdbcUrl.connect
+import JdbcUrl.given
 import Driver.load
-import Row.{asRow, resultSetAsJson, metaDataAsJson}
+import SqlResult.{OutputType, Row, given}
 
 import java.util.Properties
 import java.util.stream.Collector
@@ -62,7 +63,7 @@ object Sql
       _.finish
     )
 
-  def (statements: List[Sql]) executeAll (dbConfig: DBConfig, outputType: OutputType): Generator[Json] =
+  def (statements: List[Sql]) executeAll() (given DBConfig, OutputType): Generator[Json] =
     def loop(connection: Connection, remaining: List[Sql]): Generator[Json] =
       remaining match
         case Nil => Generator.empty[Json]
@@ -70,7 +71,7 @@ object Sql
           for 
             stmt <- statement(connection)
             rs   <- query(stmt, last)
-            json <- columnInfo(rs, outputType).combineK(results(rs, outputType))
+            json <- columnInfo(rs).combineK(results(rs))
           yield json
         case notLast :: rest => 
           val genResult = 
@@ -84,18 +85,18 @@ object Sql
 
           genResult combineK loop(connection, rest)
         
-    connection(dbConfig).flatMap(loop(_, statements)).dropWhile(Json.nil)
+    connection().flatMap(loop(_, statements)).dropWhile(Json.nil)
       
 
-  def (sql: Sql) query (dbConfig: DBConfig, outputType: OutputType): Generator[Json] = 
+  def (sql: Sql) query ()(given DBConfig, OutputType): Generator[Json] = 
     for 
-      conn <- connection(dbConfig)
+      conn <- connection()
       stmt <- statement(conn)
       rs   <- query(stmt, sql)
-      json <- columnInfo(rs, outputType).combineK(results(rs, outputType))
+      json <- columnInfo(rs).combineK(results(rs))
     yield json
 
-  def connection(dbConfig: DBConfig): Generator[Connection] =
+  def connection()(given dbConfig: DBConfig): Generator[Connection] =
     Generator.ofResource(
       dbConfig.show,
       () => {
@@ -131,16 +132,18 @@ object Sql
       _.close().done
     )
 
-  def columnInfo(rs: ResultSet, outputType: OutputType): Generator[Json] =
+  def columnInfo(rs: ResultSet)(given outputType: OutputType): Generator[Json] =
     outputType match
-      case OutputType.ArrayWithHeader(verbose) =>
-        Generator.one[Json](rs.asRow.metaDataAsJson(rs.getMetaData, verbose))
+      case ot @ OutputType.ArrayWithHeader(_) =>
+        Generator.one[Json](rs.header.as[Json])
       case _ => Generator.empty[Json]
 
-  def results(rs: ResultSet, outputType: OutputType): Generator[Json] =
+  def results(rs: ResultSet)(given OutputType): Generator[Json] =
     Generator.unfold(rs, resultSet => {
       if resultSet.next()
-      then resultSet.asRow.resultSetAsJson(outputType)(given rs.getMetaData).continue
+      then 
+        given ResultSetMetaData = rs.getMetaData
+        resultSet.row.as[Json].continue
       else halt
     })
 

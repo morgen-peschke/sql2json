@@ -7,6 +7,8 @@ trait Show[-A]
 object Show extends macros.ShowMacros
   def[A] (a: A) show(given S: Show[A]): String = S.show(a)
 
+  //export macros.ShowMacros.show
+
   given Show[Nothing] = _ => ??? // Should never be used, but needed for stuff like Nil.show to compile
   given Show[String] = str => s""""$str""""
   given Show[Int] = _.toString
