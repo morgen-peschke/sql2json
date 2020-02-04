@@ -20,10 +20,9 @@ object ShowMacros
       case ExprSeq(argExprs) =>
         val newArgsExpr = Expr.ofSeq(argExprs.map {
           case '{ $arg: $tp } =>
-            val showTp = '[Show[$tp]]
-            searchImplicitExpr(given showTp, summon[QuoteContext]) match 
+            summonExpr[Show[$tp]] match 
               case Some(showExpr) => '{ $showExpr.show($arg) }
-              case None => fail(s"could not find implicit for ${showTp.show}", arg)
+              case None => fail(s"could not find implicit for Show[${tp.show}]", arg)
           case arg => fail(s"unexpected format: ${arg.show}", arg)
         })
         '{ $sc.s($newArgsExpr: _*) }
