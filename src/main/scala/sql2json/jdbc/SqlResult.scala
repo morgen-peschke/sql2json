@@ -38,16 +38,17 @@ object SqlResult
 
     Json.Arr((1 to meta.getColumnCount).map(columnJson).toVector)
 
-  given (given meta: ResultSetMetaData, outputType: OutputType): Convertible[Row, Json] = rs =>
+  given (given outputType: OutputType): Convertible[Row, Json] = rs =>
+    val meta = rs.getMetaData
     outputType match
-      case OutputType.BareArray | OutputType.ArrayWithHeader(_) => Json.Arr((1 to meta.getColumnCount).toVector.map(rs.col(_)))
+      case OutputType.BareArray | OutputType.ArrayWithHeader(_) => Json.Arr((1 to meta.getColumnCount).toVector.map(rs.col(_, meta)))
       case OutputType.Object => 
         Json.Obj((1 to meta.getColumnCount).map { i => 
-          meta.getColumnLabel(i) -> rs.col(i)
+          meta.getColumnLabel(i) -> rs.col(i, meta)
         }.toMap)
 
   given ops: AnyRef
-    def (rs: Row) col(index: Int)(given meta: ResultSetMetaData): Json =
+    def (rs: Row) col(index: Int, meta: ResultSetMetaData): Json =
       meta.getColumnType(index) match
         case Types.ARRAY =>
           val array = rs.getArray(index)

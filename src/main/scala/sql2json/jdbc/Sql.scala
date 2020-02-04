@@ -141,9 +141,7 @@ object Sql
   def results(rs: ResultSet)(given OutputType): Generator[Json] =
     Generator.unfold(rs, resultSet => {
       if resultSet.next()
-      then 
-        given ResultSetMetaData = rs.getMetaData
-        resultSet.row.as[Json].continue
+      then resultSet.row.as[Json].continue
       else halt
     })
 
