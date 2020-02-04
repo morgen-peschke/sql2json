@@ -1,17 +1,17 @@
 package sql2json
 package cat
 
-trait Monoid[A](given val semigroup: Semigroup[A])
-  def empty: A
+trait Monoid[A](given val semigroup: Semigroup[A], E: Empty[A])
+  def empty: A = E.empty
 
-trait MonoidKCanProvideMonoid
+trait EmptyAndSemigroupIsMonoid
+  given[A: Semigroup: Empty]: Monoid[A] = Monoid.instance
+
+trait MonoidKCanProvideMonoid extends EmptyAndSemigroupIsMonoid
   given[M[_], A] (given M: MonoidK[M]): Monoid[M[A]] = M.monoid[A]
 
 object Monoid extends MonoidKCanProvideMonoid
-  def instance[A: Semigroup](zero: A): Monoid[A] =
-    new Monoid[A] with
-      def empty: A = zero
+  def instance[A: Semigroup: Empty]: Monoid[A] =
+    new Monoid[A] {}
 
   def empty[A](given M: Monoid[A]): A = M.empty
-
-  given Monoid[Long] = instance[Long](0L)

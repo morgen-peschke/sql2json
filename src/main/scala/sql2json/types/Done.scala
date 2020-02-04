@@ -1,7 +1,7 @@
 package sql2json
 package types
 
-import cat.{Eq, Semigroup, Monoid, Show}
+import cat.{Eq, Empty, Semigroup, Monoid, Show}
 
 /**
  * Dead simple placeholder to avoid auto-conversion issues with Unit in monadic code.
@@ -17,5 +17,6 @@ object Done extends Done
 
   given Show[Done] = _ => "Done"
   given Eq[Done] = _ == _
+  given Empty[Done] = Empty.instance(Done.upcast)
   given Semigroup[Done] = (a, _) => a
-  given Monoid[Done] = Monoid.instance[Done](Done)
+  given Monoid[Done] = Monoid.instance[Done]
