@@ -8,7 +8,7 @@ import types.validation.Errors, Errors.given
 import types.Generator, Generator.Action.{halt,given}
 import types.Done, Done.given
 import types.Convertible.given
-import types.json.Json
+import types.Json
 import Username.given
 import Password.given
 import config.DBConfig

@@ -1,6 +1,5 @@
 package sql2json
 package types
-package json
 
 import cat.{Show, Eq}
 import Show.show

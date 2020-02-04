@@ -3,7 +3,7 @@ package jdbc
 
 import cat.Show
 import java.sql.{ResultSet,ResultSetMetaData,Types}
-import types.json.Json
+import types.Json
 import types.Convertible, Convertible.given
 
 object SqlResult
